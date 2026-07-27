@@ -1,0 +1,57 @@
+# AGENTS.md — 작업 이력
+
+- 과제7 계획 확정: 스토리나침반, 저장 B안(폴더/ZIP), Scene=Note, Cursor 하네스 루프
+- 하네스 문서 작성: 요구사항·데이터모델·15비트·구현계획·AGENT_GUIDE·작업기록·rules
+- Vite+React+TS+RTK 골격 및 TipTap·Folder/ZIP storage 추가
+- Phase1: 문서 트리·씬 CRUD·제목 검증·디바운스 자동저장
+- Phase2: 15비트 내비·칸반·참고 드로워·영역별 태그 필터
+- typecheck·build 통과, README·프로젝트분석·작업기록 정리
+- Tailwind v4 도입 및 현대적 UI 리디자인 (Newsreader + IBM Plex Sans KR, compass 톤)
+- 15비트 내비: 다크 타임라인 카드 UI로 변경, 마커에 %·기본 설명 상시 표시
+- 라이트/다크 테마 토글·커스텀 스크롤바·프로그레스바+클릭 마커 UI로 재조정
+- 프롬프트로그 문서화, 마커 칩 디자인 개선, 폰트 IBM Plex Sans KR로 통일(명조 제거)
+- 씬 UX: 인라인 추가/편집, 바깥클릭 종료, 편집시만 툴바, DnD+⋯메뉴 6방향 이동
+- TipTap(헤드리스 텍스트 툴바) → Toast UI Editor WYSIWYG 아이콘 툴바로 교체
+- 씬 편집: 구글 킵 스타일 모달(제목 박스 제거·본문 통합·하단 툴바/닫기)
+- Toss UI+Preview 레이아웃: 좌측 전체 높이 ExplorerSidebar, RouteNav, focus-modal, fixed 참고 드로어
+- 참고 드로어를 app-shell 밖으로 분리: 접힘 시 왼쪽 사이드바 가림 해소
+- 우측 상단 WorkspaceActions: 자동저장 배지·테마·참고 토글 (edge 탭 제거)
+- 비트 이동 스크롤: scrollIntoView → board-only scrollTo로 레이아웃 밀림 수정
+- RouteNav 제목: 15비트 항로 → 프로젝트명 · 문서명
+- 폴더 핸들 IndexedDB 영속화: 새로고침 후 폴더 연결·프로젝트 자동 복원
+- 한글 IME 이슈 수정: useImeDraft로 조합 중 Redux 동기화 차단, docs/troubleshooting.md 추가
+- docs 파일명 영문화: requirements, data-model, beat-guide, implementation-plan, agent-worklog, prompt-log, project-analysis, troubleshooting
+- docs를 PRD.md / SRS.md / TRD.md로 재구성 (requirements·data-model·project-analysis 삭제)
+- 비트 칸반 좌우 호버 스크롤 화살표, 참고 메모를 씬과 동일한 카드+킵 모달 UX로 통일
+- 참고 메모 카드·모달·드로어 리스트에 스티키 노트 톤 배경색 적용 (씬과 구분)
+- 참고 메모만 연한 하늘색, 드로어 배경은 흰색 유지 · 칸반 스크롤 화살표 그림자 완화
+- 폴더 저장 시 삭제된 문서/씬/참고 JSON prune · 참고 메모 하늘색 더 연하게
+- 씬 모달 닫을 때 제목·본문 모두 비면 생성 취소(삭제)
+- 참고 메모도 빈 제목·본문이면 생성 취소 · RouteNav에 %·비트 안내 표시
+- 케밥 메뉴 포털로 가림 해소 · 표기 「스토리 나침반」 · 🧭 파비콘
+- 칸반 비트명 옆 인포 아이콘 → 비트 상세 안내 모달
+- 파비콘을 사이드바 explore 아이콘과 동일 SVG로 · 삭제 컨펌 모달 · danger 톤 밝게
+- 비트 안내 모달 본문 가독성·불릿 통일 · 태그 칩+X 삭제 · 태그 입력 UX 개선
+- 태그 X 원형 · 태그 필터 다중 선택 · 칸반 열 보더 제거
+- 비트 제목 클릭 시 프로그레스 연동 · 라이트 모드 회색 진하게 · 비트명 강조
+- 태그 X 호버 진해지는 원 · 스페이스 한 번에 태그 확정(한글 IME)
+- 참고 메모 모달 태그 툴바도 옅은 하늘색 배경 통일
+- 15비트를 1·2·3막으로 표시: 칸반 act-rail + 프로그레스 구간 라벨
+- 칸반 막 구분을 얇은 보더+상단 작은 라벨로 교체 · 다크 비트 헤더 보더 제거
+- 칸반 드래그 팬: 비트명 클릭과 충돌 수정 · 씬/참고 제목·본문·태그 검색 추가
+- 참고 드로어 그림자 완화 · 채움 통계를 프로그레스 라벨로 이동 · 검색 밑줄·확장형 UI
+- RouteNav 제목 글씨 키우고 액션과 세로 가운데 정렬
+- 칸반 툴바: 제목 좌 / 검색·태그 우 · 참고 드로어: 헤더 아이콘형 검색·태그
+- 칸반 태그 필터도 아이콘+배지로 통일 · 선택 시 높이·진하기 변화 제거
+- 아이콘형 태그: 선택 칩을 아이콘 옆에 표시(내용 유지·트리거 높이 고정)
+- 검색·태그 활성 시 필터 초기화(filter_alt_off) 버튼 표시
+- 씬 상단·사이 호버 삽입(+ 라인) · addScene order 삽입 지원
+- 씬 사이 추가를 하단 버튼과 같은 톤으로 · 나침반 로고로 사이드바 접기
+- 최소 글자 크기 11px (--font-size-min) · 태그 칩·배지 상향
+- 참고 메모: 사이 삽입·하단 추가·DnD/메뉴 순서 변경 · order 필드
+- 칸반 비트명 호버 툴팁: guidance + 핵심 질문(prompts)
+- 씬/참고 카드: 드래그 핸들 제거 · 카드 전체 드래그 · 이동 중 힌트 칩
+- 씬 드롭 위치 계산을 미리보기(arrayMove/중심점)와 일치
+- 비트 툴팁: 너비 80%·제목쪽 정렬 · 프로그레스 좌측 마커 툴팁 사이드바 가림 해소
+- 사이드바 접기 쉐브론 액센트 블루·24px · 비트 툴팁 호버 시 인포 버튼 강조
+- 문서 현행화: PRD/SRS/TRD/README/implementation-plan/AGENT_GUIDE·worklog·troubleshooting
