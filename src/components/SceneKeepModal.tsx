@@ -1,28 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import type { Scene } from '../types/models';
 import { DEFAULT_BEAT_GUIDE } from '../data/beatGuide';
 import { useAppDispatch } from '../store/hooks';
-import {
-  deleteScene,
-  nudgeScene,
-  selectScene,
-  updateScene,
-} from '../store/projectSlice';
+import { deleteScene, selectScene, updateScene } from '../store/projectSlice';
 import { isTitleValid } from '../utils/id';
-import { RichTextEditor } from './RichTextEditor';
+import { countContentChars } from '../utils/content';
+import { syncEditorTitleHeight } from '../utils/editorTitle';
+import {
+  RichTextEditor,
+  type RichTextEditorHandle,
+} from './RichTextEditor';
 import { imeInputProps, useImeDraft } from '../hooks/useImeDraft';
 import { useConfirm } from './ConfirmDialog';
 import { TagChipsInput } from './TagChipsInput';
 
-type NudgeDir = 'top' | 'up' | 'down' | 'bottom' | 'left' | 'right';
-
 export function SceneKeepModal({ scene }: { scene: Scene }) {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<() => void>(() => undefined);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<RichTextEditorHandle>(null);
 
   const titleIme = useImeDraft(
     scene.title,
@@ -32,6 +30,11 @@ export function SceneKeepModal({ scene }: { scene: Scene }) {
 
   const titleValid = isTitleValid(titleIme.value);
   const beat = DEFAULT_BEAT_GUIDE[scene.beatIndex];
+  const chars = countContentChars(scene.contentHtml);
+
+  useLayoutEffect(() => {
+    syncEditorTitleHeight(titleRef.current);
+  }, [titleIme.value]);
 
   function close() {
     // IME 조합 중이어도 초안을 반영한 뒤, 빈 씬이면 selectScene이 생성 취소
@@ -48,18 +51,17 @@ export function SceneKeepModal({ scene }: { scene: Scene }) {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [menuOpen]);
-
-  function runNudge(dir: NudgeDir) {
-    dispatch(nudgeScene({ id: scene.id, dir }));
-    setMenuOpen(false);
+  async function handleDelete() {
+    const ok = await confirm({
+      title: '씬을 삭제할까요?',
+      message: '삭제한 씬은 되돌릴 수 없습니다.',
+      confirmLabel: '삭제',
+      danger: true,
+    });
+    if (ok) {
+      dispatch(deleteScene(scene.id));
+      close();
+    }
   }
 
   return createPortal(
@@ -78,99 +80,77 @@ export function SceneKeepModal({ scene }: { scene: Scene }) {
         aria-label="씬 편집"
       >
         <div className="modal-editor-area">
-          <div
-            style={{
-              fontSize: 11,
-              color: 'var(--text-tertiary)',
-              marginBottom: 4,
-            }}
-          >
-            {beat?.nameKo ?? ''} · {beat?.percentHint ?? 0}%
+          <div className="modal-editor-meta">
+            <span className="modal-editor-meta__label">
+              {beat?.nameKo ?? ''} · {beat?.percentHint ?? 0}%
+            </span>
+            <span className="editor-char-count" aria-live="polite">
+              <span className="editor-char-count__num">
+                {chars.total.toLocaleString('ko-KR')}
+              </span>
+              {' '}자 (공백제외{' '}
+              <span className="editor-char-count__num">
+                {chars.withoutSpaces.toLocaleString('ko-KR')}
+              </span>
+              {' '}자)
+            </span>
           </div>
-          <input
-            id={`scene-title-${scene.id}`}
-            name="scene-title"
-            className="editor-title"
-            placeholder="제목 없는 씬"
-            autoFocus
-            aria-label="씬 제목"
-            {...imeInputProps(titleIme)}
-            onBlur={titleIme.onBlurCommit}
-          />
-          {!titleValid && (
-            <p className="editor-title-invalid">제목을 입력하세요.</p>
-          )}
-          <RichTextEditor
-            key={scene.id}
-            contentHtml={scene.contentHtml}
-            showToolbar
-            editable
-            height="300px"
-            variant="keep"
-            placeholder="이 씬에서 일어나는 일을 자세히 적어보세요…"
-            onChange={(html) =>
-              dispatch(updateScene({ id: scene.id, contentHtml: html }))
-            }
-          />
+          <div className="modal-note-surface">
+            <textarea
+              ref={titleRef}
+              id={`scene-title-${scene.id}`}
+              name="scene-title"
+              className="editor-title"
+              placeholder="제목"
+              rows={1}
+              autoFocus
+              aria-label="씬 제목"
+              {...imeInputProps(titleIme)}
+              onBlur={titleIme.onBlurCommit}
+              onInput={(e) => syncEditorTitleHeight(e.currentTarget)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
+                e.preventDefault();
+                titleIme.onBlurCommit();
+                // Toast UI는 DOM focus만으로는 안 잡힘 → editor.focus()
+                requestAnimationFrame(() => editorRef.current?.focus());
+              }}
+            />
+            {!titleValid && (
+              <p className="editor-title-invalid">제목을 입력하세요.</p>
+            )}
+            <RichTextEditor
+              ref={editorRef}
+              key={scene.id}
+              contentHtml={scene.contentHtml}
+              showToolbar
+              editable
+              height="340px"
+              variant="keep"
+              placeholder="메모를 입력하세요…"
+              onChange={(html) =>
+                dispatch(updateScene({ id: scene.id, contentHtml: html }))
+              }
+            />
+          </div>
         </div>
 
         <div className="modal-toolbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-            <div style={{ position: 'relative' }} ref={menuRef}>
-              <button
-                type="button"
-                className="icon-btn"
-                aria-label="더보기"
-                onClick={() => setMenuOpen((o) => !o)}
-              >
-                <span className="material-symbols-rounded">more_horiz</span>
-              </button>
-              {menuOpen && (
-                <div className="note-menu" style={{ top: 'auto', bottom: '100%', right: 0, marginBottom: 4 }}>
-                  {(
-                    [
-                      ['top', '맨 위로'],
-                      ['up', '위로'],
-                      ['down', '아래로'],
-                      ['bottom', '맨 아래로'],
-                      ['left', '왼쪽 (이전 비트)'],
-                      ['right', '오른쪽 (다음 비트)'],
-                    ] as const
-                  ).map(([dir, label]) => (
-                    <button key={dir} type="button" onClick={() => runNudge(dir)}>
-                      {label}
-                    </button>
-                  ))}
-                  <hr />
-                  <button
-                    type="button"
-                    className="danger"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      void (async () => {
-                        const ok = await confirm({
-                          title: '씬을 삭제할까요?',
-                          message: '삭제한 씬은 되돌릴 수 없습니다.',
-                          confirmLabel: '삭제',
-                          danger: true,
-                        });
-                        if (ok) {
-                          dispatch(deleteScene(scene.id));
-                          close();
-                        }
-                      })();
-                    }}
-                  >
-                    삭제
-                  </button>
-                </div>
-              )}
-            </div>
+          <div className="modal-toolbar__start">
+            <button
+              type="button"
+              className="icon-btn icon-btn--danger"
+              aria-label="씬 삭제"
+              title="삭제"
+              onClick={() => void handleDelete()}
+            >
+              <span className="material-symbols-rounded">delete</span>
+            </button>
             <TagChipsInput
               id={`scene-tags-${scene.id}`}
               name="scene-tags"
               tags={scene.tags}
-              placeholder="태그 추가 후 Enter"
+              placeholder="태그 추가 · Enter/스페이스"
               onChange={(tags) =>
                 dispatch(updateScene({ id: scene.id, tags }))
               }

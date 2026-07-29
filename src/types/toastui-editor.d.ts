@@ -25,6 +25,7 @@ declare module '@toast-ui/editor' {
     constructor(options: EditorOptions);
     getHTML(): string;
     setHTML(html: string, cursorToEnd?: boolean): void;
+    focus(): void;
     on(event: string, handler: () => void): void;
     destroy(): void;
   }

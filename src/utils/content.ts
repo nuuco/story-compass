@@ -21,6 +21,29 @@ export function htmlToPlainText(html: string | null | undefined): string {
     .trim();
 }
 
+/** 글자 수 집계용 평문 (공백 유지, 태그·nbsp만 제거) */
+function htmlToCountableText(html: string | null | undefined): string {
+  if (!html?.trim()) return '';
+  return html
+    .replace(/<br\s*\/?>/gi, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#160;/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\u00a0/g, ' ');
+}
+
+/** 본문 글자 수: 전체 / 공백 제외 */
+export function countContentChars(html: string | null | undefined): {
+  total: number;
+  withoutSpaces: number;
+} {
+  const text = htmlToCountableText(html);
+  return {
+    total: text.length,
+    withoutSpaces: text.replace(/\s/g, '').length,
+  };
+}
+
 /** 제목·본문이 모두 비어 생성 취소 대상인지 */
 export function isEmptyNote(
   title: string | null | undefined,

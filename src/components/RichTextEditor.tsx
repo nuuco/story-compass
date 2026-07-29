@@ -1,8 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import Editor from '@toast-ui/editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 import { useTheme } from '../theme/ThemeProvider';
+
+export interface RichTextEditorHandle {
+  focus: () => void;
+}
 
 interface RichTextEditorProps {
   contentHtml: string;
@@ -15,21 +19,33 @@ interface RichTextEditorProps {
   variant?: 'default' | 'keep';
 }
 
-export function RichTextEditor({
-  contentHtml,
-  onChange,
-  placeholder = '내용을 입력하세요',
-  showToolbar = true,
-  editable = true,
-  height = '220px',
-  variant = 'default',
-}: RichTextEditorProps) {
+export const RichTextEditor = forwardRef<
+  RichTextEditorHandle,
+  RichTextEditorProps
+>(function RichTextEditor(
+  {
+    contentHtml,
+    onChange,
+    placeholder = '내용을 입력하세요',
+    showToolbar = true,
+    editable = true,
+    height = '220px',
+    variant = 'default',
+  },
+  ref,
+) {
   const rootRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
   const onChangeRef = useRef(onChange);
   const { theme } = useTheme();
 
   onChangeRef.current = onChange;
+
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      editorRef.current?.focus();
+    },
+  }));
 
   useEffect(() => {
     if (!rootRef.current || !editable) return;
@@ -105,4 +121,4 @@ export function RichTextEditor({
       <div ref={rootRef} />
     </div>
   );
-}
+});
