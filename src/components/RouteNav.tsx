@@ -1,10 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ACT_GUIDE,
   DEFAULT_BEAT_GUIDE,
 } from '../data/beatGuide';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setFocusBeatIndex } from '../store/projectSlice';
+import {
+  renameDocument,
+  setFocusBeatIndex,
+  setProjectTitle,
+} from '../store/projectSlice';
+import { isTitleValid } from '../utils/id';
 import { WorkspaceActions } from './WorkspaceActions';
 import { scrollBeatColumnIntoView } from '../utils/scrollBeat';
 
@@ -20,6 +25,10 @@ export function RouteNav() {
     (s) => s.project.manifest.project.title,
   );
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [projectDraft, setProjectDraft] = useState(projectTitle);
+  const [docDraft, setDocDraft] = useState('');
+  const composingProjectRef = useRef(false);
+  const composingDocRef = useRef(false);
 
   const docScenes = scenes.filter((s) => s.documentId === selectedDocumentId);
   const filled = new Set(docScenes.map((s) => s.beatIndex));
@@ -28,8 +37,20 @@ export function RouteNav() {
     coveredCount === 0 ? 0 : Math.round((coveredCount / 15) * 100);
 
   const selectedDoc = documents.find((d) => d.id === selectedDocumentId);
-  const docName = selectedDoc?.title ?? '문서 없음';
-  const displayProjectTitle = projectTitle.trim() || '제목 없는 프로젝트';
+  const projectValid = isTitleValid(projectDraft);
+  const docValid = isTitleValid(docDraft);
+
+  useEffect(() => {
+    if (!composingProjectRef.current) {
+      setProjectDraft(projectTitle);
+    }
+  }, [projectTitle]);
+
+  useEffect(() => {
+    if (!composingDocRef.current) {
+      setDocDraft(selectedDoc?.title ?? '');
+    }
+  }, [selectedDoc?.title, selectedDocumentId]);
 
   useEffect(() => {
     if (focusBeatIndex === null) {
@@ -52,11 +73,77 @@ export function RouteNav() {
   return (
     <header className="route-nav">
       <div className="route-nav__header">
-        <div>
-          <div className="route-nav__title">
-            {displayProjectTitle}{' '}
-            <span className="route-nav__doc-name">· {docName}</span>
-          </div>
+        <div className="route-nav__title-row">
+          <input
+            id="route-project-title"
+            name="route-project-title"
+            className={`route-nav__title-input route-nav__title-input--project ${projectValid ? '' : 'invalid'}`}
+            value={projectDraft}
+            onChange={(e) => setProjectDraft(e.target.value)}
+            onCompositionStart={() => {
+              composingProjectRef.current = true;
+            }}
+            onCompositionEnd={(e) => {
+              composingProjectRef.current = false;
+              setProjectDraft(e.currentTarget.value);
+            }}
+            onBlur={() => {
+              if (composingProjectRef.current) return;
+              if (projectValid) {
+                dispatch(setProjectTitle(projectDraft.trim()));
+              } else {
+                setProjectDraft(projectTitle);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            aria-label="프로젝트 제목"
+            placeholder="프로젝트 제목"
+          />
+          {selectedDocumentId ? (
+            <>
+              <span className="route-nav__title-sep" aria-hidden>
+                ·
+              </span>
+              <input
+                id="route-document-title"
+                name="route-document-title"
+                className={`route-nav__title-input route-nav__title-input--doc ${docValid ? '' : 'invalid'}`}
+                value={docDraft}
+                onChange={(e) => setDocDraft(e.target.value)}
+                onCompositionStart={() => {
+                  composingDocRef.current = true;
+                }}
+                onCompositionEnd={(e) => {
+                  composingDocRef.current = false;
+                  setDocDraft(e.currentTarget.value);
+                }}
+                onBlur={() => {
+                  if (composingDocRef.current) return;
+                  if (docValid && selectedDocumentId) {
+                    dispatch(
+                      renameDocument({
+                        id: selectedDocumentId,
+                        title: docDraft.trim(),
+                      }),
+                    );
+                  } else {
+                    setDocDraft(selectedDoc?.title ?? '');
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
+                aria-label="문서 제목"
+                placeholder="문서 제목"
+              />
+            </>
+          ) : null}
         </div>
         <WorkspaceActions />
       </div>
