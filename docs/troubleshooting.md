@@ -82,6 +82,11 @@ IndexedDB에 핸들만 저장하고, 앱 시작 시 `restoreFolderConnection`으
 
 권한 팝업이 뜨면 허용. ZIP 모드로 열면 폴더 핸들은 지워짐.
 
+> **참고:** 앱 **시작 직후**에는 `requestPermission`을 호출하지 않는다.  
+> 이미 허용된 권한(`queryPermission`)만으로 복원하고, 권한이 없으면 연결 안내/사이드바 목록만 보여 준다.  
+> 권한 재요청은 사용자가 프로젝트를 클릭할 때(`switchToProject`) 한다.  
+> (시작 시 `requestPermission` → 「폴더 연결 복원 중…」 멈춤: **§5**)
+
 ---
 
 ## 3. Vite `Outdated Optimize Dep` (Toast UI 등)
@@ -118,3 +123,41 @@ rm -rf node_modules/.vite && npm run dev
 
 - `src/components/SceneKanban.tsx` (또는 스크롤 유틸)
 - `src/components/RouteNav.tsx`
+
+---
+
+## 5. 「폴더 연결 복원 중…」만 계속 표시
+
+### 증상
+
+앱을 열거나 새로고침하면 가운데에 **「폴더 연결 복원 중…」**만 보이고, 연결 안내·칸반으로 넘어가지 않음.
+
+### 원인
+
+1. **시작 시 `requestPermission` 호출**  
+   File System Access API의 권한 요청은 **사용자 제스처**(클릭 등)가 있어야 한다.  
+   `useRestoreFolder` / 레거시 핸들 마이그레이션에서 페이지 로드 직후 `handle.requestPermission()`을 호출하면, 브라우저가 권한창을 제대로 띄우지 못한 채 대기하다가 Promise가 끝나지 않을 수 있다.
+
+2. **복원 예외 후 `ready` 미설정**  
+   IndexedDB 마이그레이션·폴더 `load()` 중 에러가 나면 `setReady(true)`까지 도달하지 못해 로딩 화면에 고정된다.
+
+### 해결
+
+1. 앱 시작 복원(`restoreFolderConnection`)에서는 **`queryPermission`만** 사용 (`hasDirectoryPermission`).  
+   권한이 없으면 스냅샷 없이 프로젝트 목록/미연결 안내만 표시.
+2. 권한 재요청은 사이드바에서 프로젝트 클릭·「새 프로젝트/프로젝트 열기」 등 **사용자 동작** 안에서 `ensureDirectoryPermission`으로 처리.
+3. `App`의 `useRestoreFolder`는 `try/finally`로 **성공·실패와 관계없이 `setReady(true)`**.
+4. 레거시 단일 핸들 마이그레이션도 query만 확인하고, 실패 시 조용히 건너뜀.
+
+### 확인
+
+1. 강력 새로고침 → 「폴더 연결 복원 중…」이 잠깐 뜨더라도 **반드시** 안내 화면 또는 칸반으로 넘어가는지
+2. 이전에 연결한 프로젝트가 사이드바에 보이면 클릭 → 권한 허용 후 내용 로드되는지
+3. 연결이 전혀 없으면 「로컬 폴더를 연결해 주세요」 안내가 보이는지
+
+### 관련 파일
+
+- `src/storage/handleStore.ts` (`hasDirectoryPermission`, `ensureDirectoryPermission`, 마이그레이션)
+- `src/storage/restoreFolder.ts`
+- `src/storage/projectConnection.ts` (`switchToProject`)
+- `src/App.tsx` (`useRestoreFolder`)

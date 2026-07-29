@@ -181,3 +181,76 @@
 - 목적: PRD/SRS/TRD/README/implementation-plan/AGENT_GUIDE를 코드 기준으로 맞춤
 - 변경: TipTap→Toast, Phase 2.5, 검색·막·ReferenceNote.order·컴포넌트 목록 반영
 - 판정: 채택
+
+### 2026-07-29 — 킵 모달 UX (여백·툴팁·글자 수)
+
+- 목적: 본문과 하단 메뉴 여백 정리, 포맷 툴팁 가림 해소, 본문 글자 수 표시
+- 변경: keep 에디터 flex 레이아웃·툴팁 상단 표시, `editor-char-count`(평문 글자 수)
+- 판정: 채택
+
+### 2026-07-29 — 킵 모달 후속 (제목·레이아웃·삭제)
+
+- 목적: 킵식 제목·글자 수·툴바·스크롤·불릿 정렬 마무리
+- 변경: `editorTitle.ts`, ProseMirror 패딩 0, ⋯→삭제, 태그 칩 정렬, `countContentChars`
+- 판정: 채택
+
+### 2026-07-29 — 폴더 미연결 안내
+
+- 목적: 폴더 연결 전 메모 작성 차단·연결 유도
+- 변경: `FolderConnectPrompt`, `connectLocalFolder`, App/WorkspaceActions 조건부 렌더
+- 판정: 채택
+
+### 2026-07-29 — 다중 프로젝트 연결
+
+- 목적: 새 프로젝트·열기·전환·연결 해제·미연결 시 트리 숨김
+- 변경: `handleStore` v2, `projectConnection`, ExplorerSidebar 프로젝트 목록
+- 판정: 채택
+
+### 2026-07-29 — 폴더 복원 멈춤 수정
+
+- 목적: 「폴더 연결 복원 중…」 무한 대기 해소
+- 원인: 시작 시 `requestPermission` / 미처리 예외
+- 변경: `hasDirectoryPermission`(query만), restore·App try/finally, troubleshooting §5
+- 판정: 채택
+
+### 2026-07-29 — 프로그레스바·칸반 스크롤 연동
+
+- 목적: 가로 스크롤 위치에 따라 focusBeat·프로그레스 동기화
+- 변경: `getFocusedBeatFromBoardScroll`, 비트 제목→스크롤만
+- 판정: 채택
+
+### 2026-07-29 — 폴더 안내·사이드바 UX
+
+- 목적: 연결 안내 문구·레이아웃, 미연결 footer 고정, 프로젝트 row 배경
+- 변경: FolderConnectPrompt, explorer footer/active row CSS
+- 판정: 채택
+
+### 2026-07-29 — 칸반 화살표 비트 스냅
+
+- 목적: 화살표 스크롤을 비트 열 단위로 정렬
+- 변경: `scrollBoardSnap`
+- 판정: 채택
+
+### 2026-07-29 — 비트 숫자 트랜지션
+
+- 목적: 비트명과 동일 색 전환(0.2s)을 숫자 원형에 적용
+- 변경: `.beat-number` transition·hover
+- 판정: 채택
+
+### 2026-07-29 — RouteNav 제목 편집
+
+- 목적: 메인 상단 프로젝트·문서 제목 인라인 수정
+- 변경: RouteNav input + IME 가드
+- 판정: 채택
+
+### 2026-07-29 — 태그 안내 · 제목→본문 포커스
+
+- 목적: 태그 Enter/스페이스 안내, 제목 Enter 시 본문 이동
+- 변경: TagChips placeholder, RichTextEditor `forwardRef`+`editor.focus()`
+- 판정: 채택
+
+### 2026-07-29 — 글자 수·참고 모달 UI
+
+- 목적: 글자 수 숫자 강조, 참고 모달 흰색·상단 라운드 수정
+- 변경: char-count 스타일, focus-modal overflow hidden, ref 모달 하늘색 배경 제거
+- 판정: 채택
