@@ -37,6 +37,11 @@ import {
 } from '../store/projectSlice';
 import type { Scene } from '../types/models';
 import { matchesNoteSearch } from '../utils/content';
+import {
+  getFocusedBeatFromBoardScroll,
+  scrollBeatColumnIntoView,
+  scrollBoardSnap,
+} from '../utils/scrollBeat';
 import { SceneCard } from './SceneCard';
 import { SceneKeepModal } from './SceneKeepModal';
 import { BeatGuideModal } from './BeatGuideModal';
@@ -180,9 +185,9 @@ function BeatColumn({
         <button
           type="button"
           className="beat-header__focus"
-          onClick={() => dispatch(setFocusBeatIndex(beatIndex))}
+          onClick={() => scrollBeatColumnIntoView(beatIndex)}
           aria-pressed={focused}
-          aria-label={`${nameKo} 비트로 이동`}
+          aria-label={`${nameKo} 비트로 스크롤`}
           onFocus={() => setTipOpen(true)}
           onBlur={(e) => {
             if (!headerRef.current?.contains(e.relatedTarget as Node)) {
@@ -260,6 +265,8 @@ export function SceneKanban() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [guideBeatIndex, setGuideBeatIndex] = useState<number | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
+  const focusBeatRef = useRef(focusBeatIndex);
+  focusBeatRef.current = focusBeatIndex;
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
@@ -284,10 +291,7 @@ export function SceneKanban() {
   }
 
   function scrollBoard(dir: 'left' | 'right') {
-    const el = boardRef.current;
-    if (!el) return;
-    const step = Math.max(280, Math.floor(el.clientWidth * 0.7));
-    el.scrollBy({ left: dir === 'left' ? -step : step, behavior: 'smooth' });
+    scrollBoardSnap(dir, boardRef.current);
   }
 
   function canStartBoardPan(target: HTMLElement) {
@@ -394,15 +398,33 @@ export function SceneKanban() {
   useEffect(() => {
     const el = boardRef.current;
     if (!el) return;
-    updateBoardScrollButtons();
-    el.addEventListener('scroll', updateBoardScrollButtons, { passive: true });
-    const ro = new ResizeObserver(() => updateBoardScrollButtons());
+
+    let raf = 0;
+    function syncFromScroll() {
+      updateBoardScrollButtons();
+      const board = boardRef.current;
+      if (!board) return;
+      const idx = getFocusedBeatFromBoardScroll(board);
+      if (idx !== null && idx !== focusBeatRef.current) {
+        dispatch(setFocusBeatIndex(idx));
+      }
+    }
+
+    function onScroll() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(syncFromScroll);
+    }
+
+    syncFromScroll();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    const ro = new ResizeObserver(() => onScroll());
     ro.observe(el);
     return () => {
-      el.removeEventListener('scroll', updateBoardScrollButtons);
+      if (raf) cancelAnimationFrame(raf);
+      el.removeEventListener('scroll', onScroll);
       ro.disconnect();
     };
-  }, [selectedDocumentId, docScenes.length]);
+  }, [selectedDocumentId, docScenes.length, dispatch]);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
