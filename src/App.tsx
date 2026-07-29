@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { hydrateProject, setSaveStatus } from './store/projectSlice';
+import { hydrateProject, setActiveConnectedProjectId, setConnectedProjects, setReferenceDrawerOpen, setSaveStatus } from './store/projectSlice';
 import {
   flushSave,
   getActiveStorage,
@@ -11,6 +11,7 @@ import { ExplorerSidebar } from './components/ExplorerSidebar';
 import { RouteNav } from './components/RouteNav';
 import { SceneKanban } from './components/SceneKanban';
 import { ReferenceDrawer } from './components/ReferenceDrawer';
+import { FolderConnectPrompt } from './components/FolderConnectPrompt';
 
 function useAutosave() {
   const dispatch = useAppDispatch();
@@ -76,12 +77,23 @@ function useRestoreFolder() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const result = await restoreFolderConnection();
-      if (cancelled) return;
-      if (result.ok) {
-        dispatch(hydrateProject({ ...result.snapshot, storageMode: 'folder' }));
+      try {
+        const result = await restoreFolderConnection();
+        if (cancelled) return;
+        dispatch(setConnectedProjects(result.projects));
+        if (result.activeProjectId) {
+          dispatch(setActiveConnectedProjectId(result.activeProjectId));
+        }
+        if (result.snapshot) {
+          dispatch(
+            hydrateProject({ ...result.snapshot, storageMode: 'folder' }),
+          );
+        }
+      } catch (e) {
+        console.error('폴더 복원 중 오류', e);
+      } finally {
+        if (!cancelled) setReady(true);
       }
-      setReady(true);
     })();
     return () => {
       cancelled = true;
@@ -92,9 +104,19 @@ function useRestoreFolder() {
 }
 
 export default function App() {
+  const dispatch = useAppDispatch();
   const ready = useRestoreFolder();
   const sidebarCollapsed = useAppSelector((s) => s.project.sidebarCollapsed);
+  const storageMode = useAppSelector((s) => s.project.storageMode);
+  const referenceDrawerOpen = useAppSelector((s) => s.project.referenceDrawerOpen);
+  const folderConnected = storageMode === 'folder';
   useAutosave();
+
+  useEffect(() => {
+    if (!folderConnected && referenceDrawerOpen) {
+      dispatch(setReferenceDrawerOpen(false));
+    }
+  }, [folderConnected, referenceDrawerOpen, dispatch]);
 
   if (!ready) {
     return (
@@ -120,9 +142,9 @@ export default function App() {
       >
         <ExplorerSidebar />
         <RouteNav />
-        <SceneKanban />
+        {folderConnected ? <SceneKanban /> : <FolderConnectPrompt />}
       </div>
-      <ReferenceDrawer />
+      {folderConnected ? <ReferenceDrawer /> : null}
     </>
   );
 }

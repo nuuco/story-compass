@@ -14,9 +14,11 @@ const STATUS_LABEL: Record<string, string> = {
 export function WorkspaceActions() {
   const dispatch = useAppDispatch();
   const saveStatus = useAppSelector((s) => s.project.saveStatus);
+  const storageMode = useAppSelector((s) => s.project.storageMode);
   const referenceDrawerOpen = useAppSelector(
     (s) => s.project.referenceDrawerOpen,
   );
+  const folderConnected = storageMode === 'folder';
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -41,9 +43,10 @@ export function WorkspaceActions() {
       <button
         type="button"
         className={`icon-btn ${referenceDrawerOpen ? 'active' : ''}`}
+        disabled={!folderConnected}
         onClick={() => dispatch(setReferenceDrawerOpen(!referenceDrawerOpen))}
         aria-label="참고 자료"
-        title="참고 자료"
+        title={folderConnected ? '참고 자료' : '폴더 연결 후 사용 가능'}
       >
         <span className="material-symbols-rounded">dock_to_left</span>
       </button>

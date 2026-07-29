@@ -9,6 +9,13 @@ import type {
 import { SCHEMA_VERSION } from '../types/models';
 import { createId, nowIso } from '../utils/id';
 import { isEmptyNote } from '../utils/content';
+import type { ProjectSnapshot } from '../storage/types';
+
+export interface ConnectedProjectMeta {
+  projectId: string;
+  folderName: string;
+  title: string;
+}
 
 const SIDEBAR_COLLAPSED_KEY = 'story-compass-sidebar-collapsed';
 
@@ -45,6 +52,8 @@ export interface ProjectState {
   saveStatus: SaveStatus;
   focusBeatIndex: number | null;
   storageMode: 'none' | 'folder' | 'memory';
+  connectedProjects: ConnectedProjectMeta[];
+  activeConnectedProjectId: string | null;
 }
 
 function createEmptyProject(): ProjectState {
@@ -84,6 +93,18 @@ function createEmptyProject(): ProjectState {
     saveStatus: 'no-folder',
     focusBeatIndex: null,
     storageMode: 'none',
+    connectedProjects: [],
+    activeConnectedProjectId: null,
+  };
+}
+
+export function createEmptyProjectSnapshot(): ProjectSnapshot {
+  const state = createEmptyProject();
+  return {
+    manifest: state.manifest,
+    documents: state.documents,
+    scenes: state.scenes,
+    references: state.references,
   };
 }
 
@@ -97,6 +118,32 @@ const projectSlice = createSlice({
       const sidebarCollapsed = state.sidebarCollapsed;
       Object.assign(state, createEmptyProject());
       state.sidebarCollapsed = sidebarCollapsed;
+    },
+    setConnectedProjects(state, action: PayloadAction<ConnectedProjectMeta[]>) {
+      state.connectedProjects = action.payload;
+    },
+    upsertConnectedProject(state, action: PayloadAction<ConnectedProjectMeta>) {
+      const { projectId, folderName, title } = action.payload;
+      const idx = state.connectedProjects.findIndex(
+        (p) => p.projectId === projectId,
+      );
+      if (idx >= 0) {
+        if (folderName) state.connectedProjects[idx].folderName = folderName;
+        state.connectedProjects[idx].title = title;
+      } else {
+        state.connectedProjects.push(action.payload);
+      }
+    },
+    removeConnectedProject(state, action: PayloadAction<string>) {
+      state.connectedProjects = state.connectedProjects.filter(
+        (p) => p.projectId !== action.payload,
+      );
+      if (state.activeConnectedProjectId === action.payload) {
+        state.activeConnectedProjectId = null;
+      }
+    },
+    setActiveConnectedProjectId(state, action: PayloadAction<string | null>) {
+      state.activeConnectedProjectId = action.payload;
     },
     hydrateProject(
       state,
@@ -121,10 +168,17 @@ const projectSlice = createSlice({
       state.selectedReferenceId = null;
       state.storageMode = storageMode;
       state.saveStatus = storageMode === 'folder' ? 'saved' : 'no-folder';
+      if (storageMode === 'folder') {
+        state.activeConnectedProjectId = manifest.project.id;
+      }
     },
     setProjectTitle(state, action: PayloadAction<string>) {
       state.manifest.project.title = action.payload;
       state.manifest.project.updatedAt = nowIso();
+      const entry = state.connectedProjects.find(
+        (p) => p.projectId === state.manifest.project.id,
+      );
+      if (entry) entry.title = action.payload;
       markDirty(state);
     },
     addDocument(state, action: PayloadAction<{ title: string }>) {
@@ -623,6 +677,10 @@ function renumberBeat(
 export const {
   resetProject,
   hydrateProject,
+  setConnectedProjects,
+  upsertConnectedProject,
+  removeConnectedProject,
+  setActiveConnectedProjectId,
   setProjectTitle,
   addDocument,
   renameDocument,
