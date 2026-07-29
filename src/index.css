@@ -258,6 +258,12 @@
   background-color: var(--accent-blue-light);
 }
 
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .btn-primary {
   padding: 12px 24px;
   background-color: var(--accent-blue);
@@ -272,6 +278,23 @@
 
 .btn-primary:hover {
   background-color: var(--accent-blue-hover);
+}
+
+.btn-secondary {
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--text-tertiary);
 }
 
 .btn-ghost {
@@ -484,6 +507,68 @@
   background: var(--hover-bg);
 }
 
+.explorer__project-row.active {
+  background: var(--accent-blue-light);
+}
+
+.explorer__project-label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.explorer__project-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explorer__project-folder-name {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.explorer__unlink {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.explorer__project-row:hover .explorer__unlink {
+  opacity: 1;
+}
+
+.explorer__unlink:hover {
+  color: var(--danger, #e53935);
+  background: var(--hover-bg);
+}
+
+.explorer__unlink .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.explorer__empty-docs {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 6px 8px;
+  margin: 0;
+}
+
 .explorer__project-row:hover .explorer__caret {
   color: var(--text-secondary);
   opacity: 1;
@@ -656,11 +741,13 @@
 }
 
 .explorer__footer {
+  margin-top: auto;
   border-top: 1px solid var(--border-divider);
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .explorer__save-btn {
@@ -818,6 +905,56 @@
   line-height: 1.3;
   letter-spacing: -0.02em;
   color: var(--text-primary);
+}
+
+.route-nav__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.route-nav__title-input {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  border: none;
+  background: transparent;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: var(--radius-sm);
+  min-width: 4ch;
+  max-width: min(36vw, 260px);
+  field-sizing: content;
+}
+
+.route-nav__title-input:focus {
+  outline: none;
+  background: var(--hover-bg);
+}
+
+.route-nav__title-input.invalid {
+  outline: 1px solid var(--danger);
+  outline-offset: 1px;
+}
+
+.route-nav__title-input--project {
+  color: var(--text-primary);
+}
+
+.route-nav__title-input--doc {
+  color: var(--accent-blue);
+}
+
+.route-nav__title-sep {
+  color: var(--text-tertiary);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 4px;
+  flex-shrink: 0;
+  user-select: none;
 }
 
 .route-nav__doc-name {
@@ -1133,6 +1270,68 @@
   text-align: center;
 }
 
+.folder-connect-prompt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 32px 120px;
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.folder-connect-prompt__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-blue);
+  margin-bottom: -4px;
+}
+
+.folder-connect-prompt__icon .material-symbols-rounded {
+  font-size: 32px;
+}
+
+.folder-connect-prompt__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.folder-connect-prompt__lead {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.folder-connect-prompt__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.folder-connect-prompt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.folder-connect-prompt__cta .material-symbols-rounded {
+  font-size: 20px;
+}
+
 .board {
   display: flex;
   gap: 0;
@@ -1322,6 +1521,10 @@
   color: var(--accent-blue);
 }
 
+.beat-header__focus:hover .beat-number {
+  background-color: var(--accent-blue);
+}
+
 .beat-header__tooltip {
   position: absolute;
   bottom: calc(100% + 8px);
@@ -1403,6 +1606,7 @@
   font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .beat-title {
@@ -1791,10 +1995,13 @@
 
 .tag-chip--editable,
 .tag-chip--filter {
-  padding: 3px 4px 3px 8px;
+  padding: 0 4px 0 8px;
   font-size: 12px;
   font-weight: 600;
   min-height: 24px;
+  height: 24px;
+  line-height: 24px;
+  align-items: center;
   justify-content: flex-start;
 }
 
@@ -1811,7 +2018,7 @@
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
-  line-height: 1;
+  line-height: 0;
   opacity: 0.65;
   transition: background-color 0.15s ease, opacity 0.15s ease;
 }
@@ -1820,6 +2027,8 @@
   font-size: 12px;
   line-height: 1;
   display: block;
+  /* 아이콘 글리프 광학 보정 */
+  transform: translateY(0.5px);
 }
 
 .tag-chip__remove:hover {
@@ -2479,29 +2688,64 @@
   display: flex;
   flex-direction: column;
   max-height: 90vh;
-}
-
-.focus-modal.focus-modal--ref {
-  background-color: var(--ref-modal-bg);
-  border: 1px solid var(--ref-card-border);
-}
-
-.focus-modal.focus-modal--ref .modal-toolbar {
-  background-color: var(--ref-modal-bg);
-  border-top-color: var(--ref-card-border);
-}
-
-.focus-modal.focus-modal--ref .modal-editor-area {
-  background-color: var(--ref-modal-bg);
+  overflow: hidden; /* 상·하단 라운드에 맞춰 배경 클립 */
 }
 
 .modal-editor-area {
-  padding: 40px 40px 16px;
+  padding: 24px 28px 0 40px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  overflow-y: auto;
+  gap: 0;
+  overflow: hidden; /* 영역 자체에는 스크롤 없음 — 본문만 내부 스크롤 */
   flex: 1;
+  min-height: 0;
+  border-top-left-radius: var(--radius-xl);
+  border-top-right-radius: var(--radius-xl);
+  background-color: var(--bg-surface-elevated);
+}
+
+.modal-editor-area > :not(.toast-editor-wrap) {
+  flex-shrink: 0;
+}
+
+/* 킵처럼 제목+본문을 한 필기 면으로 */
+.modal-note-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.modal-editor-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 16px;
+  margin-bottom: 10px;
+}
+
+.modal-editor-meta__label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  min-width: 0;
+}
+
+.modal-editor-meta .editor-char-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--text-tertiary) 78%, transparent);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.modal-editor-meta .editor-char-count__num {
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .editor-title {
@@ -2510,31 +2754,63 @@
   outline: none;
   background: transparent;
   color: var(--text-primary);
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: -0.5px;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.4px;
+  display: block;
+  resize: none;
+  overflow: hidden;
+  min-height: calc(22px * 1.45);
+  field-sizing: content;
+  padding: 0;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  box-shadow: none;
 }
 
 .editor-title::placeholder {
   color: var(--text-tertiary);
+  font-weight: 500;
 }
 
 .editor-title-invalid {
   font-size: 11.5px;
   color: var(--danger);
+  margin: 2px 0 0;
 }
 
 .modal-toolbar {
-  padding: 16px 24px;
-  border-top: 1px solid var(--border-divider);
+  padding: 8px 20px 14px;
+  border-top: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   background-color: var(--bg-surface-elevated);
   border-bottom-left-radius: var(--radius-xl);
   border-bottom-right-radius: var(--radius-xl);
   flex-shrink: 0;
+}
+
+.modal-toolbar__start {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-toolbar .icon-btn--danger {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.modal-toolbar .icon-btn--danger:hover {
+  color: var(--danger);
+  background-color: var(--danger-soft);
 }
 
 .modal-tag-input {
@@ -2568,44 +2844,103 @@
   font-size: 14px;
 }
 
-.toast-editor-wrap .toastui-editor-contents .ProseMirror {
+.toast-editor-wrap .toastui-editor-defaultUI .ProseMirror {
   min-height: 120px;
   padding: 0.5rem 0.75rem;
 }
 
+/* Keep 모달: 본문 위 / 포맷툴바·액션바 아래 밀착 */
+.toast-editor-keep {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .toast-editor-keep .toastui-editor-defaultUI {
-  display: flex;
+  display: flex !important;
   flex-direction: column;
   border: none !important;
   background: transparent;
 }
 
-.toast-editor-keep .toastui-editor-toolbar {
-  order: 2;
-  border: none !important;
-  border-top: 1px solid var(--border-divider) !important;
-  background: transparent !important;
-  padding: 4px 8px;
-}
-
 .toast-editor-keep .toastui-editor-main {
   order: 1;
   border: none !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.toast-editor-keep .toastui-editor-defaultUI .ProseMirror,
+.toast-editor-keep .ProseMirror.toastui-editor-contents {
+  padding: 0.15rem 0 0.75rem !important;
+  min-height: 200px !important;
+  font-size: 17px !important;
+  line-height: 1.7 !important;
+  color: var(--text-secondary);
+  background: transparent !important;
+  overflow-y: auto !important;
+}
+
+/* 불릿·번호·체크박스 — 17px/1.7 줄높이에 세로 맞춤 */
+.toast-editor-keep .toastui-editor-contents ul > li::before {
+  margin-top: 0 !important;
+  top: calc((1.7em - 5px) / 2);
+}
+
+.toast-editor-keep .toastui-editor-contents ol > li::before {
+  margin-top: 0 !important;
+  top: 0;
+  height: 1.7em;
+  line-height: 1.7em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.toast-editor-keep .toastui-editor-contents .task-list-item::before {
+  margin-top: 0 !important;
+  top: calc((1.7em - 18px) / 2) !important;
+}
+
+.toast-editor-keep .toastui-editor-toolbar {
+  order: 2;
+  height: 46px !important;
+  overflow: visible !important;
+  border: none !important;
+  border-top: 1px solid var(--border-divider) !important;
+  background: transparent !important;
+  padding: 0 !important;
+  position: relative;
+  z-index: 40;
+}
+
+.toast-editor-keep .toastui-editor-defaultUI-toolbar {
+  position: relative;
+  overflow: visible !important;
+  height: 46px !important;
+  margin: 0 -28px 0 -40px;
+  padding: 7px 16px 7px 28px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 }
 
 .toast-editor-keep .toastui-editor-ww-container,
-.toast-editor-keep .toastui-editor-contents,
 .toast-editor-keep .toastui-editor-md-container {
   background: transparent !important;
   border: none !important;
 }
 
-.toast-editor-keep .toastui-editor-contents .ProseMirror {
-  padding: 0.25rem 0 1rem;
-  min-height: 200px;
-  font-size: 17px;
-  line-height: 1.7;
-  color: var(--text-secondary);
+/* 툴팁을 버튼 위쪽으로 (인라인 display는 Toast가 제어) */
+.toast-editor-keep .toastui-editor-tooltip {
+  transform: translate(24px, calc(-100% - 40px)) !important;
+  z-index: 80 !important;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.toast-editor-keep .toastui-editor-tooltip .arrow {
+  top: auto !important;
+  bottom: -3px !important;
 }
 
 .toast-editor-keep .toastui-editor-mode-switch {
