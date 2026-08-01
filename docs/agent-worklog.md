@@ -254,3 +254,25 @@
 - 목적: 글자 수 숫자 강조, 참고 모달 흰색·상단 라운드 수정
 - 변경: char-count 스타일, focus-modal overflow hidden, ref 모달 하늘색 배경 제거
 - 판정: 채택
+
+### 2026-08-01 — 워크스페이스 다중 프로젝트 + 휴지통
+
+- 목적: 연결 단위를 워크스페이스로 바꾸고 앱 휴지통(soft delete) 도입
+- 변경: `WorkspaceStorage`, `handleStore` v3, soft-delete Redux, `TrashPanel`, 사이드바 UX, PRD/SRS/TRD
+- 스키마: `schemaVersion = 2`, 구 단일 프로젝트 폴더 자동 마이그레이션
+- 명령: typecheck·build 통과
+- 판정: 채택
+
+### 2026-08-01 — ZIP 제거 + 텍스트/문서 추출
+
+- 목적: ZIP 폴백 제거, 작가용 평문 추출·토스트 피드백
+- 변경: `zipStorage`/`jszip` 삭제, `exportText`, `ToastProvider`, 씬/참고/칸반 UI, docs
+- 명령: typecheck·build 통과
+- 판정: 채택
+
+### 2026-08-01 — 토스트·휴지통 패널 스타일
+
+- 목적: 토스트가 투명·그림자 과다로 보이던 UX 수정
+- 원인: `.app-toast` / `.trash-panel`이 미정의 CSS 변수(`--bg-elevated`, `--bg-primary`)를 참조
+- 변경: 진한 알약형 토스트(`--text-primary` 배경·`--shadow-md`), 휴지통 패널 `--bg-surface`, docs 현행화
+- 판정: 채택

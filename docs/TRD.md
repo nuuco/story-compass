@@ -36,7 +36,7 @@ npm run build
 |---|---|
 | `src/components` | UI — 아래 주요 컴포넌트 |
 | `src/store` | `projectSlice` — 프로젝트·씬·참고 원본 |
-| `src/storage` | Folder/ZIP I/O, 디바운스, IndexedDB 핸들, 복원, prune |
+| `src/storage` | Workspace/Folder I/O, 디바운스, IndexedDB 핸들, 복원, prune |
 | `src/hooks` | `useImeDraft` 등 |
 | `src/data` | 15비트·막 가이드 데이터 |
 | `src/theme` | ThemeProvider |
@@ -46,7 +46,9 @@ npm run build
 
 | 컴포넌트 | 역할 |
 |---|---|
-| `ExplorerSidebar` | 문서 트리·폴더/ZIP·사이드바 접기 |
+| `ExplorerSidebar` | 워크스페이스·프로젝트 트리·휴지통·폴더 연결 |
+| `TrashPanel` | 휴지통 목록·정렬·복원·영구삭제·비우기 |
+| `Toast` | 복사·저장 등 짧은 피드백 — `.app-toast` 진한 알약형(불투명·`--shadow-md`) |
 | `RouteNav` | 제목·프로그레스·1·2·3막·마커 |
 | `WorkspaceActions` | 저장 배지·테마·참고 토글 |
 | `SceneKanban` / `SceneCard` | 15열 칸반·삽입·DnD·비트 툴팁 |
@@ -65,81 +67,66 @@ npm run build
 
 ### 3.1 스키마
 
-`manifest.schemaVersion = 1`
+`schemaVersion = 2` (워크스페이스 + 휴지통)
 
-### 3.2 프로젝트 폴더 트리
+### 3.2 워크스페이스·프로젝트 폴더 트리
+
+연결 단위는 **워크스페이스 폴더 1개**. 그 안에 여러 프로젝트.
 
 ```text
-{project}/
-  manifest.json
-  documents/{documentId}.json
-  scenes/{sceneId}.json
-  references/{referenceId}.json
-  assets/{assetId}.{ext}
-  beats/guide.json
+{workspace}/
+  workspace.json
+  projects/{projectId}/
+    manifest.json                 # project.title (표시명)
+    documents/{documentId}.json
+    scenes/{sceneId}.json
+    references/{referenceId}.json
+    trash/
+      scenes|references|bundles/{id}.json
+    assets/ · beats/
+  trash/projects/{projectId}/     # 삭제된 프로젝트
 ```
+
+구버전(루트 `manifest.json`)은 열 때 `projects/{id}/`로 자동 마이그레이션.
 
 ### 3.3 핵심 타입
 
 ```ts
-interface Scene {
-  id: string;
-  documentId: string;
-  title: string;
-  contentHtml: string;
-  beatIndex: number; // 0~14
-  order: number;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
+interface WorkspaceManifest {
+  schemaVersion: number;
+  activeProjectId: string | null;
+  projects: { id; title; createdAt; updatedAt }[];
 }
 
-interface ReferenceNote {
-  id: string;
-  title: string;
-  contentHtml: string;
-  tags: string[];
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface BeatGuideItem {
-  beatIndex: number;
-  percentHint: number;
-  nameKo: string;
-  nameEn: string;
-  guidanceKo: string;   // RouteNav·툴팁 요약
-  purposeKo: string;
-  detailKo: string;
-  tipsKo: string[];
-  avoidKo: string[];
-  promptsKo: string[];  // 툴팁·모달 핵심 질문
-}
+interface Scene { /* id, documentId, title, contentHtml, beatIndex, order, tags, createdAt, updatedAt */ }
+interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, updatedAt */ }
+// TrashedScene / TrashedReference / TrashedDocumentBundle / TrashedProject
 ```
 
-문서·막 가이드 등 전체는 `src/types/models.ts`를 단일 소스로 한다.
+전체는 `src/types/models.ts`를 단일 소스로 한다.
 
 ### 3.4 Store vs 로컬
 
 | 데이터 | 위치 |
 |---|---|
-| manifest, documents, scenes, references | Redux store |
+| manifest, documents, scenes, references, trash | Redux store |
+| trashedProjects, workspaceFolderName, connectedProjects | store |
 | selectedSceneId, selectedDocumentId, selectedReferenceId | store |
-| centerTagFilter / referenceTagFilter, centerSearchQuery / referenceSearchQuery | store |
-| focusBeatIndex, referenceDrawerOpen, sidebarCollapsed | store |
-| sidebarCollapsed 영속 | **LocalStorage** (UI 선호만 — 노트 원본 아님) |
+| centerTagFilter / referenceTagFilter, search queries | store |
+| focusBeatIndex, referenceDrawerOpen, trashPanelOpen, sidebarCollapsed | store |
+| sidebarCollapsed 영속 | **LocalStorage** (UI 선호만) |
 | IME 입력 초안 | `useImeDraft` 로컬 |
-| Toast UI 인스턴스 | 에디터 내부 (`contentHtml`만 store 동기화, remount 금지) |
+| Toast UI 인스턴스 | 에디터 내부 (`contentHtml`만 store 동기화) |
 
 원본을 store와 컴포넌트 state에 **중복 저장하지 않는다.**
 
-### 3.5 검증
+### 3.5 검증·삭제
 
 - `title.trim().length === 0` → 유효하지 않음
 - `contentHtml` 빈값·빈 `<p></p>` 허용
 - `beatIndex` 0~14
-- 모달 닫을 때 제목·본문 모두 비면 `discardEmptyScene` / `discardEmptyReference`
+- 모달 닫을 때 제목·본문 모두 비면 `discardEmpty*` (휴지통 미포함 hard delete)
+- 씬·참고·문서·프로젝트 삭제 → 앱 휴지통(soft delete). 영구삭제/비우기 = `removeEntry` (PC 휴지통 미경유)
 
 ---
 
@@ -147,16 +134,15 @@ interface BeatGuideItem {
 
 | 어댑터 | 역할 |
 |---|---|
-| `FolderStorage` | 디렉터리 핸들로 JSON 트리 read/write |
-| `ZipStorage` | JSZip 다운로드/업로드 폴백 |
-| `handleStore` | **폴더 핸들만** IndexedDB에 영속화 (노트 원본 아님) |
+| `WorkspaceStorage` | 워크스페이스 루트·프로젝트 생성/전환/휴지통 이동 |
+| `FolderStorage` | `projects/{id}/` JSON 트리 + 프로젝트 trash |
+| `handleStore` | **워크스페이스 폴더 핸들만** IndexedDB 영속화 |
 | `restoreFolderConnection` | 앱 시작 시 핸들·권한·스냅샷 복원 |
 | `autosave` | dirty 시 500ms 디바운스 `saveAll` |
-| prune | 저장 시 store에 없는 documents/scenes/references JSON 삭제 |
+| prune | 활성·trash 각각 keepIds 기준 orphan JSON 삭제 |
+| `exportText` | 씬/참고/문서 평문 변환·클립보드·`.txt` 다운로드 |
 
-인터페이스: `load()`, `saveAll()`, 개별 save 헬퍼.
-
-ZIP으로 열면 폴더 핸들은 제거하고 `storageMode: 'memory'`.
+`storageMode`: `none` | `folder` (ZIP/`memory` 제거).
 
 ---
 
@@ -176,6 +162,8 @@ ReferenceDrawer       # shell 밖 fixed (그리드 간섭 방지)
 - 참고 패널: 우측 상단 `dock_to_left` 토글
 - 테마: `data-theme` + `.dark` 클래스
 - 프로그레스 좌측 마커 툴팁: RouteNav z-index > 사이드바, 끝 마커 정렬 보정
+- 앱 피드백 토스트(`.app-toast`): `--text-primary` 배경·`--bg-surface` 글자·`--radius-pill`·`--shadow-md`. 오류는 `--danger` 배경. Toast UI Editor와 클래스명 충돌 방지용 `app-` 접두사
+- 휴지통 패널(`.trash-panel`): `--bg-surface` + `--shadow-md` (미정의 `--bg-elevated` 사용 금지)
 
 ---
 
@@ -197,9 +185,10 @@ ReferenceDrawer       # shell 밖 fixed (그리드 간섭 방지)
 | Phase | 내용 | 상태 |
 |---|---|---|
 | 0 | 하네스·골격·store·storage | ✅ |
-| 1 | 문서 트리·씬 CRUD·에디터·폴더/ZIP | ✅ (에디터: TipTap→Toast UI) |
+| 1 | 문서 트리·씬 CRUD·에디터·폴더 저장 | ✅ (에디터: TipTap→Toast UI) |
 | 2 | 15비트·칸반·참고·태그 필터 | ✅ |
 | 2.5 | 검색·막·킵 참고·삽입·빈 취소·사이드바·prune 등 UX | ✅ |
+| 2.6 | 워크스페이스·휴지통·ZIP 제거·텍스트 추출·앱 토스트 | ✅ |
 | 3 | Drive 등 | 후순위 |
 
 ---
@@ -212,3 +201,4 @@ ReferenceDrawer       # shell 밖 fixed (그리드 간섭 방지)
 - 새로고침 폴더 끊김 → IndexedDB 핸들 복원
 - Vite Outdated Optimize Dep → `.vite` 캐시 삭제
 - 비트 `scrollIntoView` 레이아웃 밀림 → board-only `scrollTo`
+- 토스트/휴지통 투명 → 존재하는 CSS 토큰만 사용(`--bg-surface` 등)

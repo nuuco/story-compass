@@ -11,7 +11,7 @@ Software Requirements Specification. **무엇을 반드시 만족하는지** 정
 
 | 구분 | 설명 |
 |---|---|
-| 과제 제출 범위 | React + TypeScript + 상태관리 + Scene(=Note) 운영 필수 6기능 + 로컬 폴더/ZIP 저장 |
+| 과제 제출 범위 | React + TypeScript + 상태관리 + Scene(=Note) 운영 필수 6기능 + 로컬 워크스페이스 폴더 저장 |
 | 제품 확장 | PRD의 15비트·칸반·참고·검색·막 구분 등 (Should로 구현됨) |
 
 구현·검증은 아래 **Must**를 우선한다.
@@ -37,7 +37,7 @@ Software Requirements Specification. **무엇을 반드시 만족하는지** 정
 | 2 | 작성 | 유효 제목으로 씬 추가 (내용 빈값 허용) |
 | 3 | 확인 | 선택 씬 내용 표시(모달/미리보기) |
 | 4 | 수정 | 반영 + `updatedAt` 갱신 |
-| 5 | 삭제 | 목록·선택 상태 동시 갱신 (확인 모달) |
+| 5 | 삭제 | 휴지통으로 이동(soft delete). 목록·선택 상태 동시 갱신 (확인 모달) |
 | 6 | 빈 상태·입력 오류 | 빈 안내, 제목 무효 시 빨간 안내 |
 
 ### 도메인 매핑
@@ -60,9 +60,11 @@ Software Requirements Specification. **무엇을 반드시 만족하는지** 정
 - Left: 프로젝트 제목·문서 CRUD(추가/이름변경/삭제/선택)
 - Center: 선택 문서의 씬 CRUD + 리치 HTML 에디터 (Toast UI)
 - **제목 필수**(공백만 거부), **내용 빈값 허용**
-- 저장: 프로젝트 = 로컬 폴더 또는 ZIP. **LocalStorage에 노트 원본 저장 금지**
+- 저장: **워크스페이스 폴더**(내부에 여러 프로젝트). **LocalStorage에 노트 원본 저장 금지**
 - 폴더 연결 시 변경 감지 **디바운스 자동 저장**(기본 500ms). 에디터 Undo와 독립
 - 한글 IME 조합 중 입력이 깨지지 않을 것
+- 삭제: 씬·참고·문서·프로젝트 → 앱 휴지통. 복원·항목 영구삭제·휴지통 비우기(디스크 `removeEntry`, PC 휴지통 미경유)
+- 추출: 씬/참고 **텍스트로 복사**, 활성 문서 **원고 복사**·`.txt` 저장 (피드백은 **앱 토스트** — alert 아님)
 
 ### 4.2 Should (구현됨)
 
@@ -72,15 +74,18 @@ Software Requirements Specification. **무엇을 반드시 만족하는지** 정
 - Right 참고 메모 CRUD + 킵 모달 + 드로워 (`order`·사이 삽입·DnD)
 - Center / Right **독립** 텍스트 검색 + 다중 태그 필터 + 필터 초기화
 - 씬: 사이/상단 호버 삽입, 카드 전체 DnD, ⋯ 메뉴 6방향 이동
-- 빈 제목·본문으로 모달을 닫으면 생성 취소(씬·참고)
+- 빈 제목·본문으로 모달을 닫으면 생성 취소(씬·참고) — 휴지통 미포함
 - 라이트/다크 테마, 사이드바 접기(LocalStorage — UI 선호만)
-- 폴더 핸들 새로고침 복원(IndexedDB), 저장 시 orphan JSON prune
+- 워크스페이스 핸들 새로고침 복원(IndexedDB), 저장 시 orphan JSON prune
+- 휴지통 UI: 삭제일/생성일 정렬, 복원, 영구삭제, 비우기
+- 텍스트/문서 추출 + 앱 토스트 피드백 (불투명 알약형 `.app-toast`)
 - 칸반 좌우 호버 스크롤·빈 영역 드래그 팬
 
 ### 4.3 Won’t (이번 제출)
 
 - Google Drive OAuth·실시간 동기화
 - 인증·협업·자동 배포·실사용자 개인정보
+- ZIP 가져오기/내보내기 (제거됨 — Chromium 워크스페이스 폴더 전용)
 
 ---
 
@@ -90,7 +95,7 @@ Software Requirements Specification. **무엇을 반드시 만족하는지** 정
 |---|---|
 | 타입 안전 | `npm run typecheck` 통과 |
 | 빌드 | `npm run build` 통과 |
-| 브라우저 | Chromium: 폴더 연결 / 그 외: ZIP 폴백 |
+| 브라우저 | Chromium(Chrome/Edge) 권장 — File System Access |
 | 보안 | `.env` 토큰 커밋 금지, force push·대량 삭제 금지 |
 | Agentic | 소단위 Task, 승인된 계획, 작업·프롬프트 기록 |
 

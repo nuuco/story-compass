@@ -18,7 +18,7 @@
 ## 허용
 
 - `src/**`, `docs/**`, `public/**`, 루트 설정 파일, `AGENTS.md`, `README.md`, `AGENT_GUIDE.md`
-- 계획된 패키지: `@reduxjs/toolkit`, `react-redux`, `@toast-ui/editor`, `@dnd-kit/*`, `jszip`, Tailwind, 타입 정의
+- 계획된 패키지: `@reduxjs/toolkit`, `react-redux`, `@toast-ui/editor`, `@dnd-kit/*`, Tailwind, 타입 정의
 
 ## 금지
 
@@ -33,13 +33,16 @@
 - Scene = 과제 Note
 - 제목 필수(trim), contentHtml 빈값 허용
 - 자동 저장 시 에디터 remount 금지 (Ctrl+Z 유지)
-- 저장: 폴더(File System Access) 우선, ZIP 폴백
+- 저장: 워크스페이스 폴더(File System Access, Chromium 권장). ZIP 미지원
+- 삭제: 앱 휴지통 soft-delete → 복원·영구삭제·비우기
+- 추출 피드백: `ToastProvider` / `.app-toast` (alert 금지)
 - 비트 열 스크롤: `.board`만 `scrollTo` (`scrollIntoView` 금지)
 - 한글 입력: `useImeDraft` / `TagChipsInput` composition 가드
 
 ## 완료 조건 (현행)
 
-- Phase 1~2.5: 문서·씬·참고 CRUD, 15비트 칸반, 검색·태그, 폴더/ZIP·복원·prune, typecheck/build 통과
+- Phase 1~2.6: 문서·씬·참고 CRUD, 15비트 칸반, 검색·태그, 워크스페이스·휴지통, 텍스트 추출·앱 토스트, 복원·prune, typecheck/build 통과
+- 저장: Chromium 워크스페이스 폴더 전용 (ZIP 제거)
 - 상세: [docs/implementation-plan.md](docs/implementation-plan.md), [docs/SRS.md](docs/SRS.md)
 
 ## 오류 절차

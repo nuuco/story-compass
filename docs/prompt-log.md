@@ -212,3 +212,19 @@
 
 - **요청:** 글자 수 숫자만 진하게·안내는 연하게·숫자 굵게·「자」 앞 띄어쓰기 / 참고 모달 흰 배경·상단 라운드 이상
 - **대응:** `editor-char-count__num` 스타일. 참고 모달 `--ref-modal-bg` 제거·씬과 동일 흰색. `focus-modal` overflow hidden으로 라운드 클립
+
+### 2026-08-01 — 워크스페이스·휴지통
+
+- **요청:** 폴더 하나(워크스페이스)에 여러 프로젝트, 삭제 메모 휴지통(삭제일/생성일 정렬·복원·비우기), 프로젝트 삭제도 휴지통
+- **대응:** `WorkspaceStorage`, soft-delete Redux, `TrashPanel`, `schemaVersion=2`, 문서 갱신
+
+### 2026-08-01 — ZIP 제거·텍스트 추출·토스트
+
+- **요청:** ZIP 불필요 → 제거. 메모/문서 텍스트 복사·`.txt` 저장. 피드백은 alert 대신 토스트
+- **대응:** `zipStorage`/`jszip` 삭제, `exportText`, `ToastProvider`, 칸반·씬/참고 UI
+
+### 2026-08-01 — 토스트 스타일
+
+- **요청:** 토스트가 투명하고 그림자가 너무 강함
+- **원인:** 미정의 `--bg-elevated`/`--bg-primary`로 배경 미적용
+- **대응:** 진한 알약형 `.app-toast`(`--text-primary`·`--shadow-md`), 휴지통 패널 `--bg-surface`, troubleshooting §6

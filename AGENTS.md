@@ -78,3 +78,9 @@
 - 제목 Enter→본문: Toast editor.focus() (DOM focus 실패 수정)
 - 글자 수: 숫자 굵게·진하게, 안내 연하게, 「N 자」 띄어쓰기
 - 참고 모달: 흰 배경 · focus-modal overflow로 상단 라운드 클립
+- 워크스페이스 다중 프로젝트: 폴더 1연결 → projects/{id}/, 표시명은 manifest.title
+- 휴지통: 씬·참고·문서묶음·프로젝트 soft-delete, 삭제일/생성일 정렬·복원·영구삭제·비우기
+- ZIP 제거: ZipStorage·jszip 삭제, Chromium 워크스페이스 폴더 전용
+- 텍스트 추출: 씬/참고 복사, 문서 원고 복사·.txt 저장, 피드백은 app-toast
+- 토스트/휴지통 패널 배경 수정: 미정의 변수(--bg-elevated) 제거, 진한 알약형 토스트·shadow-md
+- 문서 현행화: 토스트·ZIP제거·추출·Phase2.6을 PRD/SRS/TRD/README/plan/worklog/troubleshooting/prompt-log에 반영

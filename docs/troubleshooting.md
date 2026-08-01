@@ -80,7 +80,7 @@ IndexedDB에 핸들만 저장하고, 앱 시작 시 `restoreFolderConnection`으
 1. 폴더 연결 후 새로고침
 2. 「자동 저장됨」과 기존 문서/씬이 복원되는지
 
-권한 팝업이 뜨면 허용. ZIP 모드로 열면 폴더 핸들은 지워짐.
+권한 팝업이 뜨면 허용. Chrome/Edge에서 워크스페이스 폴더를 연결해야 한다.
 
 > **참고:** 앱 **시작 직후**에는 `requestPermission`을 호출하지 않는다.  
 > 이미 허용된 권한(`queryPermission`)만으로 복원하고, 권한이 없으면 연결 안내/사이드바 목록만 보여 준다.  
@@ -161,3 +161,31 @@ rm -rf node_modules/.vite && npm run dev
 - `src/storage/restoreFolder.ts`
 - `src/storage/projectConnection.ts` (`switchToProject`)
 - `src/App.tsx` (`useRestoreFolder`)
+
+---
+
+## 6. 토스트·휴지통 패널이 투명하거나 그림자가 과함
+
+### 증상
+
+- 텍스트 복사·원고 저장 후 뜨는 토스트가 **반투명**해 뒤 화면이 비침
+- 그림자가 지나치게 진함
+- 휴지통 패널 배경도 마찬가지로 비칠 수 있음
+
+### 원인
+
+`.app-toast` / `.trash-panel`이 **존재하지 않는** CSS 변수 `--bg-elevated`, `--bg-primary`를 참조했다.  
+이 프로젝트의 실제 토큰은 `--bg-base` / `--bg-surface` / `--bg-surface-elevated`이다.  
+변수 해석 실패 → 배경색 미적용 → 투명하게 보임.
+
+### 해결
+
+1. 토스트: `--text-primary` 배경 + `--bg-surface` 글자 + `--radius-pill` + `--shadow-md` (비트 툴팁과 같은 단색 톤)
+2. 오류 토스트: `--danger` 배경 + 흰 글자
+3. 휴지통 패널: `--bg-surface` + `--shadow-md`
+4. Toast UI Editor와 클래스 충돌을 피하려면 `.toast` 대신 `.app-toast` 사용
+
+### 관련 파일
+
+- `src/index.css` (`.app-toast`, `.trash-panel`)
+- `src/components/Toast.tsx`
