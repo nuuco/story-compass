@@ -1,17 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { hydrateProject, setActiveConnectedProjectId, setConnectedProjects, setReferenceDrawerOpen, setSaveStatus } from './store/projectSlice';
+import {
+  hydrateProject,
+  setActiveConnectedProjectId,
+  setConnectedProjects,
+  setReferenceDrawerOpen,
+  setSaveStatus,
+  setTrashedProjects,
+  setWorkspaceFolderName,
+} from './store/projectSlice';
 import {
   flushSave,
   getActiveStorage,
+  getActiveWorkspace,
   scheduleSave,
 } from './storage/autosave';
 import { restoreFolderConnection } from './storage/restoreFolder';
+import { emptyProjectTrash } from './types/models';
 import { ExplorerSidebar } from './components/ExplorerSidebar';
 import { RouteNav } from './components/RouteNav';
 import { SceneKanban } from './components/SceneKanban';
 import { ReferenceDrawer } from './components/ReferenceDrawer';
 import { FolderConnectPrompt } from './components/FolderConnectPrompt';
+import { TrashPanel } from './components/TrashPanel';
 
 function useAutosave() {
   const dispatch = useAppDispatch();
@@ -31,7 +42,15 @@ function useAutosave() {
           documents: project.documents,
           scenes: project.scenes,
           references: project.references,
+          trash: project.trash ?? emptyProjectTrash(),
         });
+        const ws = getActiveWorkspace();
+        if (ws) {
+          await ws.updateProjectSummary(project.manifest.project.id, {
+            title: project.manifest.project.title,
+            updatedAt: project.manifest.project.updatedAt,
+          });
+        }
         dispatch(setSaveStatus('saved'));
       } catch {
         dispatch(setSaveStatus('error'));
@@ -43,6 +62,7 @@ function useAutosave() {
     project.documents,
     project.scenes,
     project.references,
+    project.trash,
     project.storageMode,
     dispatch,
   ]);
@@ -58,6 +78,7 @@ function useAutosave() {
           documents: project.documents,
           scenes: project.scenes,
           references: project.references,
+          trash: project.trash ?? emptyProjectTrash(),
         });
       });
     };
@@ -80,7 +101,19 @@ function useRestoreFolder() {
       try {
         const result = await restoreFolderConnection();
         if (cancelled) return;
-        dispatch(setConnectedProjects(result.projects));
+        if (result.workspaceFolderName) {
+          dispatch(setWorkspaceFolderName(result.workspaceFolderName));
+        }
+        dispatch(
+          setConnectedProjects(
+            result.projects.map((p) => ({
+              projectId: p.id,
+              folderName: result.workspaceFolderName ?? '',
+              title: p.title,
+            })),
+          ),
+        );
+        dispatch(setTrashedProjects(result.trashedProjects));
         if (result.activeProjectId) {
           dispatch(setActiveConnectedProjectId(result.activeProjectId));
         }
@@ -108,8 +141,17 @@ export default function App() {
   const ready = useRestoreFolder();
   const sidebarCollapsed = useAppSelector((s) => s.project.sidebarCollapsed);
   const storageMode = useAppSelector((s) => s.project.storageMode);
-  const referenceDrawerOpen = useAppSelector((s) => s.project.referenceDrawerOpen);
+  const referenceDrawerOpen = useAppSelector(
+    (s) => s.project.referenceDrawerOpen,
+  );
+  const trashPanelOpen = useAppSelector((s) => s.project.trashPanelOpen);
+  const workspaceFolderName = useAppSelector(
+    (s) => s.project.workspaceFolderName,
+  );
+  const connectedProjects = useAppSelector((s) => s.project.connectedProjects);
   const folderConnected = storageMode === 'folder';
+  const workspaceLinked =
+    Boolean(workspaceFolderName) || connectedProjects.length > 0;
   useAutosave();
 
   useEffect(() => {
@@ -145,6 +187,7 @@ export default function App() {
         {folderConnected ? <SceneKanban /> : <FolderConnectPrompt />}
       </div>
       {folderConnected ? <ReferenceDrawer /> : null}
+      {workspaceLinked && trashPanelOpen ? <TrashPanel /> : null}
     </>
   );
 }

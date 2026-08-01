@@ -2,19 +2,28 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type {
   DocumentMeta,
   Manifest,
+  ProjectTrash,
   ReferenceNote,
   SaveStatus,
   Scene,
+  TrashKind,
+  TrashedProject,
 } from '../types/models';
-import { SCHEMA_VERSION } from '../types/models';
+import { emptyProjectTrash, SCHEMA_VERSION } from '../types/models';
 import { createId, nowIso } from '../utils/id';
 import { isEmptyNote } from '../utils/content';
+import { createEmptyProjectSnapshot as createEmptySnap } from '../storage/createEmpty';
 import type { ProjectSnapshot } from '../storage/types';
+import type { TrashSortBy } from '../utils/trash';
 
 export interface ConnectedProjectMeta {
   projectId: string;
   folderName: string;
   title: string;
+}
+
+export function createEmptyProjectSnapshot(): ProjectSnapshot {
+  return createEmptySnap();
 }
 
 const SIDEBAR_COLLAPSED_KEY = 'story-compass-sidebar-collapsed';
@@ -40,6 +49,9 @@ export interface ProjectState {
   documents: DocumentMeta[];
   scenes: Scene[];
   references: ReferenceNote[];
+  trash: ProjectTrash;
+  trashedProjects: TrashedProject[];
+  workspaceFolderName: string | null;
   selectedDocumentId: string | null;
   selectedSceneId: string | null;
   selectedReferenceId: string | null;
@@ -48,10 +60,12 @@ export interface ProjectState {
   centerSearchQuery: string;
   referenceSearchQuery: string;
   referenceDrawerOpen: boolean;
+  trashPanelOpen: boolean;
+  trashSortBy: TrashSortBy;
   sidebarCollapsed: boolean;
   saveStatus: SaveStatus;
   focusBeatIndex: number | null;
-  storageMode: 'none' | 'folder' | 'memory';
+  storageMode: 'none' | 'folder';
   connectedProjects: ConnectedProjectMeta[];
   activeConnectedProjectId: string | null;
 }
@@ -81,6 +95,9 @@ function createEmptyProject(): ProjectState {
     documents: [doc],
     scenes: [],
     references: [],
+    trash: emptyProjectTrash(),
+    trashedProjects: [],
+    workspaceFolderName: null,
     selectedDocumentId: docId,
     selectedSceneId: null,
     selectedReferenceId: null,
@@ -89,22 +106,14 @@ function createEmptyProject(): ProjectState {
     centerSearchQuery: '',
     referenceSearchQuery: '',
     referenceDrawerOpen: false,
+    trashPanelOpen: false,
+    trashSortBy: 'deletedAt',
     sidebarCollapsed: readSidebarCollapsed(),
     saveStatus: 'no-folder',
     focusBeatIndex: null,
     storageMode: 'none',
     connectedProjects: [],
     activeConnectedProjectId: null,
-  };
-}
-
-export function createEmptyProjectSnapshot(): ProjectSnapshot {
-  const state = createEmptyProject();
-  return {
-    manifest: state.manifest,
-    documents: state.documents,
-    scenes: state.scenes,
-    references: state.references,
   };
 }
 
@@ -118,6 +127,9 @@ const projectSlice = createSlice({
       const sidebarCollapsed = state.sidebarCollapsed;
       Object.assign(state, createEmptyProject());
       state.sidebarCollapsed = sidebarCollapsed;
+    },
+    setWorkspaceFolderName(state, action: PayloadAction<string | null>) {
+      state.workspaceFolderName = action.payload;
     },
     setConnectedProjects(state, action: PayloadAction<ConnectedProjectMeta[]>) {
       state.connectedProjects = action.payload;
@@ -145,6 +157,15 @@ const projectSlice = createSlice({
     setActiveConnectedProjectId(state, action: PayloadAction<string | null>) {
       state.activeConnectedProjectId = action.payload;
     },
+    setTrashedProjects(state, action: PayloadAction<TrashedProject[]>) {
+      state.trashedProjects = action.payload;
+    },
+    setTrashPanelOpen(state, action: PayloadAction<boolean>) {
+      state.trashPanelOpen = action.payload;
+    },
+    setTrashSortBy(state, action: PayloadAction<TrashSortBy>) {
+      state.trashSortBy = action.payload;
+    },
     hydrateProject(
       state,
       action: PayloadAction<{
@@ -152,7 +173,8 @@ const projectSlice = createSlice({
         documents: DocumentMeta[];
         scenes: Scene[];
         references: ReferenceNote[];
-        storageMode: 'folder' | 'memory';
+        trash?: ProjectTrash;
+        storageMode: 'folder';
       }>,
     ) {
       const { manifest, documents, scenes, references, storageMode } =
@@ -161,6 +183,7 @@ const projectSlice = createSlice({
       state.documents = documents;
       state.scenes = scenes;
       state.references = references;
+      state.trash = action.payload.trash ?? emptyProjectTrash();
       ensureReferenceOrders(state);
       state.selectedDocumentId =
         manifest.activeDocumentId ?? documents[0]?.id ?? null;
@@ -211,6 +234,14 @@ const projectSlice = createSlice({
     },
     deleteDocument(state, action: PayloadAction<string>) {
       const id = action.payload;
+      const doc = state.documents.find((d) => d.id === id);
+      if (!doc) return;
+      const childScenes = state.scenes.filter((s) => s.documentId === id);
+      state.trash.bundles.push({
+        deletedAt: nowIso(),
+        document: { ...doc },
+        scenes: childScenes.map((s) => ({ ...s, tags: [...s.tags] })),
+      });
       state.documents = state.documents.filter((d) => d.id !== id);
       state.scenes = state.scenes.filter((s) => s.documentId !== id);
       if (state.selectedDocumentId === id) {
@@ -291,6 +322,10 @@ const projectSlice = createSlice({
       const scene = state.scenes.find((s) => s.id === id);
       if (!scene) return;
       const { documentId, beatIndex } = scene;
+      state.trash.scenes.push({
+        deletedAt: nowIso(),
+        scene: { ...scene, tags: [...scene.tags] },
+      });
       state.scenes = state.scenes.filter((s) => s.id !== id);
       if (state.selectedSceneId === id) state.selectedSceneId = null;
       renumberBeat(state, documentId, beatIndex);
@@ -517,11 +552,100 @@ const projectSlice = createSlice({
       markDirty(state);
     },
     deleteReference(state, action: PayloadAction<string>) {
+      const ref = state.references.find((r) => r.id === action.payload);
+      if (!ref) return;
+      state.trash.references.push({
+        deletedAt: nowIso(),
+        reference: { ...ref, tags: [...ref.tags] },
+      });
       state.references = state.references.filter((r) => r.id !== action.payload);
       if (state.selectedReferenceId === action.payload) {
         state.selectedReferenceId = null;
       }
       ensureReferenceOrders(state);
+      markDirty(state);
+    },
+    /** 활성 프로젝트 trash 항목 복원 (project kind는 projectConnection에서 처리) */
+    restoreTrashItem(
+      state,
+      action: PayloadAction<{ kind: TrashKind; id: string }>,
+    ) {
+      const { kind, id } = action.payload;
+      if (kind === 'project') return;
+
+      if (kind === 'scene') {
+        const idx = state.trash.scenes.findIndex((t) => t.scene.id === id);
+        if (idx < 0) return;
+        const [item] = state.trash.scenes.splice(idx, 1);
+        const scene = { ...item.scene, tags: [...item.scene.tags] };
+        const docExists = state.documents.some((d) => d.id === scene.documentId);
+        if (!docExists) {
+          // 문서가 없으면 첫 문서로 귀속
+          if (!state.documents[0]) {
+            state.trash.scenes.push(item);
+            return;
+          }
+          scene.documentId = state.documents[0].id;
+        }
+        const siblings = state.scenes.filter(
+          (s) =>
+            s.documentId === scene.documentId && s.beatIndex === scene.beatIndex,
+        );
+        scene.order = siblings.length;
+        state.scenes.push(scene);
+        markDirty(state);
+        return;
+      }
+
+      if (kind === 'reference') {
+        const idx = state.trash.references.findIndex(
+          (t) => t.reference.id === id,
+        );
+        if (idx < 0) return;
+        const [item] = state.trash.references.splice(idx, 1);
+        const ref = { ...item.reference, tags: [...item.reference.tags] };
+        ref.order = state.references.length;
+        state.references.push(ref);
+        ensureReferenceOrders(state);
+        markDirty(state);
+        return;
+      }
+
+      if (kind === 'documentBundle') {
+        const idx = state.trash.bundles.findIndex((t) => t.document.id === id);
+        if (idx < 0) return;
+        const [item] = state.trash.bundles.splice(idx, 1);
+        const doc = { ...item.document };
+        doc.order = state.documents.length;
+        state.documents.push(doc);
+        for (const s of item.scenes) {
+          state.scenes.push({ ...s, tags: [...s.tags] });
+        }
+        markDirty(state);
+      }
+    },
+    /** 활성 프로젝트 trash 항목 영구 삭제 (디스크는 saveAll prune) */
+    purgeTrashItem(
+      state,
+      action: PayloadAction<{ kind: TrashKind; id: string }>,
+    ) {
+      const { kind, id } = action.payload;
+      if (kind === 'project') return;
+      if (kind === 'scene') {
+        state.trash.scenes = state.trash.scenes.filter((t) => t.scene.id !== id);
+      } else if (kind === 'reference') {
+        state.trash.references = state.trash.references.filter(
+          (t) => t.reference.id !== id,
+        );
+      } else if (kind === 'documentBundle') {
+        state.trash.bundles = state.trash.bundles.filter(
+          (t) => t.document.id !== id,
+        );
+      }
+      markDirty(state);
+    },
+    clearProjectTrash(state) {
+      state.trash = emptyProjectTrash();
       markDirty(state);
     },
     selectReference(state, action: PayloadAction<string | null>) {
@@ -616,7 +740,7 @@ const projectSlice = createSlice({
     },
     setStorageMode(
       state,
-      action: PayloadAction<'none' | 'folder' | 'memory'>,
+      action: PayloadAction<'none' | 'folder'>,
     ) {
       state.storageMode = action.payload;
       if (action.payload === 'folder') state.saveStatus = 'saved';
@@ -677,10 +801,14 @@ function renumberBeat(
 export const {
   resetProject,
   hydrateProject,
+  setWorkspaceFolderName,
   setConnectedProjects,
   upsertConnectedProject,
   removeConnectedProject,
   setActiveConnectedProjectId,
+  setTrashedProjects,
+  setTrashPanelOpen,
+  setTrashSortBy,
   setProjectTitle,
   addDocument,
   renameDocument,
@@ -698,6 +826,9 @@ export const {
   nudgeReference,
   updateReference,
   deleteReference,
+  restoreTrashItem,
+  purgeTrashItem,
+  clearProjectTrash,
   selectReference,
   setCenterTagFilter,
   setReferenceTagFilter,

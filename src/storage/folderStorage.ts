@@ -3,67 +3,84 @@
 import type {
   DocumentMeta,
   Manifest,
+  ProjectTrash,
   ReferenceNote,
   Scene,
+  TrashedDocumentBundle,
+  TrashedReference,
+  TrashedScene,
 } from '../types/models';
-import { SCHEMA_VERSION } from '../types/models';
+import { emptyProjectTrash, SCHEMA_VERSION } from '../types/models';
+import {
+  ensureDir,
+  listJsonFiles,
+  pruneMissingJson,
+  readJson,
+  writeJson,
+} from './fsHelpers';
 import type { ProjectSnapshot, ProjectStorage } from './types';
 
-async function ensureDir(
+async function loadTrash(root: FileSystemDirectoryHandle): Promise<ProjectTrash> {
+  const trashRoot = await ensureDir(root, 'trash');
+  const scenesDir = await ensureDir(trashRoot, 'scenes');
+  const refsDir = await ensureDir(trashRoot, 'references');
+  const bundlesDir = await ensureDir(trashRoot, 'bundles');
+
+  const scenes: TrashedScene[] = [];
+  for (const name of await listJsonFiles(scenesDir)) {
+    const item = await readJson<TrashedScene>(scenesDir, name);
+    if (item?.scene) scenes.push(item);
+  }
+
+  const references: TrashedReference[] = [];
+  for (const name of await listJsonFiles(refsDir)) {
+    const item = await readJson<TrashedReference>(refsDir, name);
+    if (item?.reference) references.push(item);
+  }
+
+  const bundles: TrashedDocumentBundle[] = [];
+  for (const name of await listJsonFiles(bundlesDir)) {
+    const item = await readJson<TrashedDocumentBundle>(bundlesDir, name);
+    if (item?.document) bundles.push(item);
+  }
+
+  return { scenes, references, bundles };
+}
+
+async function saveTrash(
   root: FileSystemDirectoryHandle,
-  name: string,
-): Promise<FileSystemDirectoryHandle> {
-  return root.getDirectoryHandle(name, { create: true });
-}
-
-async function writeJson(
-  dir: FileSystemDirectoryHandle,
-  name: string,
-  data: unknown,
+  trash: ProjectTrash,
 ): Promise<void> {
-  const file = await dir.getFileHandle(name, { create: true });
-  const writable = await file.createWritable();
-  await writable.write(JSON.stringify(data, null, 2));
-  await writable.close();
-}
+  const trashRoot = await ensureDir(root, 'trash');
+  const scenesDir = await ensureDir(trashRoot, 'scenes');
+  const refsDir = await ensureDir(trashRoot, 'references');
+  const bundlesDir = await ensureDir(trashRoot, 'bundles');
 
-async function readJson<T>(
-  dir: FileSystemDirectoryHandle,
-  name: string,
-): Promise<T | null> {
-  try {
-    const file = await dir.getFileHandle(name);
-    const blob = await file.getFile();
-    const text = await blob.text();
-    return JSON.parse(text) as T;
-  } catch {
-    return null;
+  for (const item of trash.scenes) {
+    await writeJson(scenesDir, `${item.scene.id}.json`, item);
   }
-}
-
-async function listJsonFiles(
-  dir: FileSystemDirectoryHandle,
-): Promise<string[]> {
-  const names: string[] = [];
-  for await (const [name, handle] of dir.entries()) {
-    if (handle.kind === 'file' && name.endsWith('.json')) names.push(name);
+  for (const item of trash.references) {
+    await writeJson(refsDir, `${item.reference.id}.json`, item);
   }
-  return names;
-}
-
-/** 스냅샷에 없는 JSON 파일을 디렉터리에서 제거 (삭제 후 재로드 시 유령 메모 방지) */
-async function pruneMissingJson(
-  dir: FileSystemDirectoryHandle,
-  keepIds: Set<string>,
-): Promise<void> {
-  for (const name of await listJsonFiles(dir)) {
-    const id = name.replace(/\.json$/, '');
-    if (!keepIds.has(id)) {
-      await dir.removeEntry(name);
-    }
+  for (const item of trash.bundles) {
+    await writeJson(bundlesDir, `${item.document.id}.json`, item);
   }
+
+  await pruneMissingJson(
+    scenesDir,
+    new Set(trash.scenes.map((t) => t.scene.id)),
+  );
+  await pruneMissingJson(
+    refsDir,
+    new Set(trash.references.map((t) => t.reference.id)),
+  );
+  await pruneMissingJson(
+    bundlesDir,
+    new Set(trash.bundles.map((t) => t.document.id)),
+  );
 }
 
+/** 프로젝트 루트(projects/{id}/)에 대한 FolderStorage */
 export class FolderStorage implements ProjectStorage {
   readonly kind = 'folder' as const;
   private root: FileSystemDirectoryHandle;
@@ -80,13 +97,6 @@ export class FolderStorage implements ProjectStorage {
     return new FolderStorage(root);
   }
 
-  static async pick(): Promise<FolderStorage | null> {
-    const picker = window.showDirectoryPicker;
-    if (!picker) return null;
-    const root = await picker({ mode: 'readwrite' });
-    return new FolderStorage(root);
-  }
-
   async load(): Promise<ProjectSnapshot> {
     const manifest =
       (await readJson<Manifest>(this.root, 'manifest.json')) ??
@@ -100,6 +110,8 @@ export class FolderStorage implements ProjectStorage {
         },
         activeDocumentId: null,
       } satisfies Manifest);
+
+    if (!manifest.schemaVersion) manifest.schemaVersion = SCHEMA_VERSION;
 
     const documentsDir = await ensureDir(this.root, 'documents');
     const scenesDir = await ensureDir(this.root, 'scenes');
@@ -124,11 +136,17 @@ export class FolderStorage implements ProjectStorage {
       if (ref) references.push(ref);
     }
 
-    return { manifest, documents, scenes, references };
+    const trash = await loadTrash(this.root);
+
+    return { manifest, documents, scenes, references, trash };
   }
 
   async saveAll(snapshot: ProjectSnapshot): Promise<void> {
-    await writeJson(this.root, 'manifest.json', snapshot.manifest);
+    const manifest = {
+      ...snapshot.manifest,
+      schemaVersion: SCHEMA_VERSION,
+    };
+    await writeJson(this.root, 'manifest.json', manifest);
     const documentsDir = await ensureDir(this.root, 'documents');
     const scenesDir = await ensureDir(this.root, 'scenes');
     const refsDir = await ensureDir(this.root, 'references');
@@ -157,6 +175,8 @@ export class FolderStorage implements ProjectStorage {
       refsDir,
       new Set(snapshot.references.map((r) => r.id)),
     );
+
+    await saveTrash(this.root, snapshot.trash ?? emptyProjectTrash());
   }
 
   async saveScene(scene: Scene): Promise<void> {
@@ -170,7 +190,10 @@ export class FolderStorage implements ProjectStorage {
   }
 
   async saveManifest(manifest: Manifest): Promise<void> {
-    await writeJson(this.root, 'manifest.json', manifest);
+    await writeJson(this.root, 'manifest.json', {
+      ...manifest,
+      schemaVersion: SCHEMA_VERSION,
+    });
   }
 
   async saveReference(ref: ReferenceNote): Promise<void> {
