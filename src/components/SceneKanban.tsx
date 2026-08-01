@@ -38,6 +38,12 @@ import {
 import type { Scene } from '../types/models';
 import { matchesNoteSearch } from '../utils/content';
 import {
+  copyTextToClipboard,
+  downloadTextFile,
+  formatDocumentPlain,
+  safeFilename,
+} from '../utils/exportText';
+import {
   getFocusedBeatFromBoardScroll,
   scrollBeatColumnIntoView,
   scrollBoardSnap,
@@ -48,6 +54,7 @@ import { BeatGuideModal } from './BeatGuideModal';
 import { SearchInput } from './SearchInput';
 import { TagFilter } from './TagFilter';
 import { useConfirm } from './ConfirmDialog';
+import { useToast } from './Toast';
 
 /** 하단 추가 버튼과 같은 톤의 호버 삽입 */
 function SceneInsertGap({
@@ -253,6 +260,7 @@ function BeatColumn({
 export function SceneKanban() {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
+  const { showToast } = useToast();
   const {
     scenes,
     selectedDocumentId,
@@ -558,6 +566,66 @@ export function SceneKanban() {
         <span className="canvas__toolbar-title">
           {selectedDoc?.title ?? '문서'}
         </span>
+        <div className="canvas__toolbar-export">
+          <button
+            type="button"
+            className="canvas__export-btn"
+            title="원고 복사"
+            aria-label="문서 원고를 클립보드에 복사"
+            onClick={() => {
+              void (async () => {
+                const docScenes = scenes.filter(
+                  (s) => s.documentId === selectedDocumentId,
+                );
+                if (docScenes.length === 0) {
+                  showToast('복사할 씬이 없습니다', 'error');
+                  return;
+                }
+                const text = formatDocumentPlain({
+                  documentTitle: selectedDoc?.title ?? '문서',
+                  scenes: docScenes,
+                  beatNames: DEFAULT_BEAT_GUIDE.map((b) => b.nameKo),
+                });
+                const ok = await copyTextToClipboard(text);
+                showToast(
+                  ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
+                  ok ? 'info' : 'error',
+                );
+              })();
+            }}
+          >
+            <span className="material-symbols-rounded">content_copy</span>
+            원고 복사
+          </button>
+          <button
+            type="button"
+            className="canvas__export-btn"
+            title="텍스트 파일로 저장"
+            aria-label="문서 원고를 텍스트 파일로 저장"
+            onClick={() => {
+              const docScenes = scenes.filter(
+                (s) => s.documentId === selectedDocumentId,
+              );
+              if (docScenes.length === 0) {
+                showToast('저장할 씬이 없습니다', 'error');
+                return;
+              }
+              const text = formatDocumentPlain({
+                documentTitle: selectedDoc?.title ?? '문서',
+                scenes: docScenes,
+                beatNames: DEFAULT_BEAT_GUIDE.map((b) => b.nameKo),
+              });
+              downloadTextFile(
+                safeFilename(selectedDoc?.title ?? '문서'),
+                text,
+              );
+              showToast('텍스트 파일을 저장했습니다');
+            }}
+          >
+            <span className="material-symbols-rounded">download</span>
+            .txt 저장
+          </button>
+        </div>
         <div className="canvas__toolbar-tools">
           <SearchInput
             id="scene-search"

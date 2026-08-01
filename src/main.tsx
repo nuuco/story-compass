@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { ConfirmProvider } from './components/ConfirmDialog';
+import { ToastProvider } from './components/Toast';
 import App from './App';
 import './index.css';
 
@@ -12,7 +13,9 @@ createRoot(document.getElementById('root')!).render(
     <Provider store={store}>
       <ThemeProvider>
         <ConfirmProvider>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </ConfirmProvider>
       </ThemeProvider>
     </Provider>

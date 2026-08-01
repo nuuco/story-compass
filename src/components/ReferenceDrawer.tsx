@@ -32,8 +32,10 @@ import { matchesNoteSearch } from '../utils/content';
 import { TagFilter } from './TagFilter';
 import { SearchInput } from './SearchInput';
 import { ReferenceKeepModal } from './ReferenceKeepModal';
+import { copyTextToClipboard, formatNotePlain } from '../utils/exportText';
 import { NoteMenuPortal } from './NoteMenuPortal';
 import { useConfirm } from './ConfirmDialog';
+import { useToast } from './Toast';
 
 function RefInsertGap({ order }: { order: number }) {
   const dispatch = useAppDispatch();
@@ -59,6 +61,7 @@ function RefInsertGap({ order }: { order: number }) {
 function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
+  const { showToast } = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const suppressClickRef = useRef(false);
@@ -154,14 +157,30 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
           <hr />
           <button
             type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              void (async () => {
+                const text = formatNotePlain(refNote);
+                const ok = await copyTextToClipboard(text);
+                showToast(
+                  ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
+                  ok ? 'info' : 'error',
+                );
+              })();
+            }}
+          >
+            텍스트로 복사
+          </button>
+          <button
+            type="button"
             className="danger"
             onClick={() => {
               setMenuOpen(false);
               void (async () => {
                 const ok = await confirm({
                   title: '참고 메모를 삭제할까요?',
-                  message: '삭제한 메모는 되돌릴 수 없습니다.',
-                  confirmLabel: '삭제',
+                  message: '삭제한 메모는 휴지통으로 이동합니다. 나중에 복원할 수 있습니다.',
+                  confirmLabel: '휴지통으로',
                   danger: true,
                 });
                 if (ok) dispatch(deleteReference(refNote.id));

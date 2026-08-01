@@ -8,8 +8,10 @@ import {
   nudgeScene,
   selectScene,
 } from '../store/projectSlice';
+import { copyTextToClipboard, formatNotePlain } from '../utils/exportText';
 import { NoteMenuPortal } from './NoteMenuPortal';
 import { useConfirm } from './ConfirmDialog';
+import { useToast } from './Toast';
 
 type NudgeDir = 'top' | 'up' | 'down' | 'bottom' | 'left' | 'right';
 
@@ -20,6 +22,7 @@ interface SceneCardProps {
 export function SceneCard({ scene }: SceneCardProps) {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
+  const { showToast } = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const suppressClickRef = useRef(false);
@@ -117,14 +120,30 @@ export function SceneCard({ scene }: SceneCardProps) {
           <hr />
           <button
             type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              void (async () => {
+                const text = formatNotePlain(scene);
+                const ok = await copyTextToClipboard(text);
+                showToast(
+                  ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
+                  ok ? 'info' : 'error',
+                );
+              })();
+            }}
+          >
+            텍스트로 복사
+          </button>
+          <button
+            type="button"
             className="danger"
             onClick={() => {
               setMenuOpen(false);
               void (async () => {
                 const ok = await confirm({
                   title: '씬을 삭제할까요?',
-                  message: '삭제한 씬은 되돌릴 수 없습니다.',
-                  confirmLabel: '삭제',
+                  message: '삭제한 씬은 휴지통으로 이동합니다. 나중에 복원할 수 있습니다.',
+                  confirmLabel: '휴지통으로',
                   danger: true,
                 });
                 if (ok) dispatch(deleteScene(scene.id));

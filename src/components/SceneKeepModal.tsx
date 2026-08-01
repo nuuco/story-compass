@@ -12,12 +12,15 @@ import {
   type RichTextEditorHandle,
 } from './RichTextEditor';
 import { imeInputProps, useImeDraft } from '../hooks/useImeDraft';
+import { copyTextToClipboard, formatNotePlain } from '../utils/exportText';
 import { useConfirm } from './ConfirmDialog';
 import { TagChipsInput } from './TagChipsInput';
+import { useToast } from './Toast';
 
 export function SceneKeepModal({ scene }: { scene: Scene }) {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
+  const { showToast } = useToast();
   const closeRef = useRef<() => void>(() => undefined);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const editorRef = useRef<RichTextEditorHandle>(null);
@@ -54,8 +57,8 @@ export function SceneKeepModal({ scene }: { scene: Scene }) {
   async function handleDelete() {
     const ok = await confirm({
       title: '씬을 삭제할까요?',
-      message: '삭제한 씬은 되돌릴 수 없습니다.',
-      confirmLabel: '삭제',
+      message: '삭제한 씬은 휴지통으로 이동합니다. 나중에 복원할 수 있습니다.',
+      confirmLabel: '휴지통으로',
       danger: true,
     });
     if (ok) {
@@ -137,6 +140,27 @@ export function SceneKeepModal({ scene }: { scene: Scene }) {
 
         <div className="modal-toolbar">
           <div className="modal-toolbar__start">
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="텍스트로 복사"
+              title="텍스트로 복사"
+              onClick={() => {
+                void (async () => {
+                  const text = formatNotePlain({
+                    title: titleIme.value,
+                    contentHtml: scene.contentHtml,
+                  });
+                  const ok = await copyTextToClipboard(text);
+                  showToast(
+                    ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
+                    ok ? 'info' : 'error',
+                  );
+                })();
+              }}
+            >
+              <span className="material-symbols-rounded">content_copy</span>
+            </button>
             <button
               type="button"
               className="icon-btn icon-btn--danger"
