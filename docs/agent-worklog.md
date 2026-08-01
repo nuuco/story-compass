@@ -276,3 +276,9 @@
 - 원인: `.app-toast` / `.trash-panel`이 미정의 CSS 변수(`--bg-elevated`, `--bg-primary`)를 참조
 - 변경: 진한 알약형 토스트(`--text-primary` 배경·`--shadow-md`), 휴지통 패널 `--bg-surface`, docs 현행화
 - 판정: 채택
+
+### 2026-08-02 — CTA 문구·제목 규칙 문서 정합
+
+- 목적: 워크스페이스 CTA·제목 검증을 구현과 문서에 맞춤
+- 변경: CTA「새 워크스페이스」/「기존 워크스페이스 열기」, TRD JSZip 제거, 제목=빨간 안내만(저장 허용)·본문만 노트 허용을 PRD/SRS/TRD/README/AGENT_GUIDE/rules에 반영
+- 판정: 채택

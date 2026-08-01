@@ -425,7 +425,7 @@ export function ExplorerSidebar() {
                   >
                     create_new_folder
                   </span>
-                  워크스페이스 만들기
+                  새 워크스페이스
                 </button>
                 <button
                   type="button"
@@ -438,7 +438,7 @@ export function ExplorerSidebar() {
                   >
                     folder_open
                   </span>
-                  워크스페이스 열기
+                  기존 워크스페이스 열기
                 </button>
               </>
             )}

@@ -31,9 +31,10 @@
 ## 도메인 규칙
 
 - Scene = 과제 Note
-- 제목 필수(trim), contentHtml 빈값 허용
+- 제목·본문 각각 빈값 허용. 제목 공백 시 빨간 안내만(저장 차단 아님). 제목·본문 모두 비면 모달 닫을 때 생성 취소
 - 자동 저장 시 에디터 remount 금지 (Ctrl+Z 유지)
 - 저장: 워크스페이스 폴더(File System Access, Chromium 권장). ZIP 미지원
+- 연결 CTA: 새 워크스페이스 / 기존 워크스페이스 열기
 - 삭제: 앱 휴지통 soft-delete → 복원·영구삭제·비우기
 - 추출 피드백: `ToastProvider` / `.app-toast` (alert 금지)
 - 비트 열 스크롤: `.board`만 `scrollTo` (`scrollIntoView` 금지)

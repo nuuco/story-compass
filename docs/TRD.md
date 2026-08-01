@@ -15,7 +15,7 @@ Technical Requirements / Design Document. **어떻게 구현하는지** 정의�
 | 상태 | Redux Toolkit (`src/store/projectSlice.ts`) |
 | 에디터 | Toast UI Editor WYSIWYG (`@toast-ui/editor`) |
 | DnD | `@dnd-kit` |
-| 저장 | File System Access API + JSZip |
+| 저장 | File System Access API (Chromium 워크스페이스 폴더). ZIP/JSZip 없음 |
 | 폰트 | Pretendard, Material Symbols Rounded |
 | 패키지 | npm |
 
@@ -46,7 +46,7 @@ npm run build
 
 | 컴포넌트 | 역할 |
 |---|---|
-| `ExplorerSidebar` | 워크스페이스·프로젝트 트리·휴지통·폴더 연결 |
+| `ExplorerSidebar` | 워크스페이스·프로젝트 트리·휴지통·폴더 연결 (CTA: 새 워크스페이스 / 기존 워크스페이스 열기) |
 | `TrashPanel` | 휴지통 목록·정렬·복원·영구삭제·비우기 |
 | `Toast` | 복사·저장 등 짧은 피드백 — `.app-toast` 진한 알약형(불투명·`--shadow-md`) |
 | `RouteNav` | 제목·프로그레스·1·2·3막·마커 |
@@ -122,10 +122,10 @@ interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, upd
 
 ### 3.5 검증·삭제
 
-- `title.trim().length === 0` → 유효하지 않음
+- 제목 공백: UI 빨간 안내(「제목을 입력하세요」). **저장은 막지 않음** — 카드에 「제목 없는 씬/메모」로 표시. 본문만 있는 노트 허용
 - `contentHtml` 빈값·빈 `<p></p>` 허용
 - `beatIndex` 0~14
-- 모달 닫을 때 제목·본문 모두 비면 `discardEmpty*` (휴지통 미포함 hard delete)
+- 모달 닫을 때 **제목·본문 모두** 비면 `discardEmpty*` (휴지통 미포함 hard delete)
 - 씬·참고·문서·프로젝트 삭제 → 앱 휴지통(soft delete). 영구삭제/비우기 = `removeEntry` (PC 휴지통 미경유)
 
 ---

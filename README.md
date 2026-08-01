@@ -9,9 +9,9 @@ Save the Cat 15비트 구조를 축으로 씬(메모 조각)을 집필하는 Rea
 |---|---|
 | Note | Scene (`scenes/*.json`) |
 | 목록·작성·확인·수정·삭제 | 씬 CRUD + `updatedAt` (삭제 → 앱 휴지통) |
-| 빈 상태·입력 오류 | 빈 칸반/제목 빨간 안내 |
+| 빈 상태·입력 오류 | 제목 공백 시 빨간 안내(저장은 허용). 카드「제목 없는 씬」 |
 | 상태관리 | Redux Toolkit (`src/store`) |
-| 저장 | 로컬 워크스페이스 폴더(File System Access). 노트 원본 LocalStorage 미사용 |
+| 저장 | 로컬 워크스페이스 폴더(File System Access, Chrome/Edge). 노트 원본 LocalStorage 미사용 |
 | 검색(권장) | 칸반·참고 텍스트 검색 + 다중 태그 필터 |
 | 추출 | 씬/참고 텍스트 복사, 문서 전체 원고 복사·`.txt` 저장 (피드백: 앱 토스트) |
 
@@ -25,7 +25,8 @@ npm run build
 ```
 
 - Node 권장: 20+
-- **Chrome / Edge** 권장 (File System Access API)
+- **Chrome / Edge** 권장 (File System Access API). Safari/Firefox는 폴더 연결 미지원
+- 연결: **새 워크스페이스** 또는 **기존 워크스페이스 열기**
 - 워크스페이스 폴더 연결 후 변경 시 약 500ms 디바운스 자동 저장
 - 새로고침: 폴더 핸들이 IndexedDB에 있으면 자동 복원 시도 (권한 허용 필요)
 - Ctrl+Z: 에디터 Undo (디스크 저장과 독립)

@@ -8,6 +8,6 @@ globs:
 
 - 소단위 Task만 수정. 완성 앱 일괄 생성 금지.
 - Scene 원본은 Redux Toolkit store만. LocalStorage에 노트 원본 저장 금지.
-- 제목 필수, contentHtml 빈값 허용. 자동 저장 시 에디터 remount 금지.
+- 제목·본문 빈값 허용(제목 공백=빨간 안내만, 저장 차단 아님). 자동 저장 시 에디터 remount 금지.
 - Drive OAuth·비밀키 커밋 금지. 변경 후 typecheck.
 - 한글 문서·주석 유지. 요구는 `docs/PRD.md`/`SRS.md`/`TRD.md`. 작업은 `docs/agent-worklog.md`와 `AGENTS.md`에 한 줄 기록.

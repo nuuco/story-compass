@@ -84,3 +84,5 @@
 - 텍스트 추출: 씬/참고 복사, 문서 원고 복사·.txt 저장, 피드백은 app-toast
 - 토스트/휴지통 패널 배경 수정: 미정의 변수(--bg-elevated) 제거, 진한 알약형 토스트·shadow-md
 - 문서 현행화: 토스트·ZIP제거·추출·Phase2.6을 PRD/SRS/TRD/README/plan/worklog/troubleshooting/prompt-log에 반영
+- 워크스페이스 CTA 문구: 만들기/열기 → 새 워크스페이스·기존 워크스페이스 열기
+- 문서 정합: TRD JSZip 제거, 제목=안내만(저장 허용)·CTA·Chrome 권장을 PRD/SRS/TRD/README/AGENT_GUIDE/rules/worklog에 반영
