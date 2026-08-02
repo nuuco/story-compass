@@ -37,12 +37,6 @@ import type { Scene } from '../types/models';
 import { matchesNoteSearch } from '../utils/content';
 import { beatDroppableId } from '../utils/dndIds';
 import {
-  copyTextToClipboard,
-  downloadTextFile,
-  formatDocumentPlain,
-  safeFilename,
-} from '../utils/exportText';
-import {
   getFocusedBeatFromBoardScroll,
   scrollBeatColumnIntoView,
   scrollBoardSnap,
@@ -50,6 +44,7 @@ import {
 import { SceneCard } from './SceneCard';
 import { SceneKeepModal } from './SceneKeepModal';
 import { BeatGuideModal } from './BeatGuideModal';
+import { ManuscriptPreviewModal } from './ManuscriptPreviewModal';
 import { SearchInput } from './SearchInput';
 import { TagFilter } from './TagFilter';
 import { useConfirm } from './ConfirmDialog';
@@ -269,7 +264,9 @@ export function SceneKanban() {
   const centerSearchQuery = useAppSelector(selectCenterSearchQuery);
   const focusBeatIndex = useAppSelector(selectFocusBeatIndex);
   const documents = useAppSelector(selectDocuments);
+  const projectTitle = useAppSelector((s) => s.project.manifest.project.title);
   const [guideBeatIndex, setGuideBeatIndex] = useState<number | null>(null);
+  const [manuscriptOpen, setManuscriptOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const focusBeatRef = useRef(focusBeatIndex);
   focusBeatRef.current = focusBeatIndex;
@@ -445,18 +442,10 @@ export function SceneKanban() {
       : null;
 
   const selectedDoc = documents.find((d) => d.id === selectedDocumentId);
-
-  function documentPlainText() {
-    const docScenes = scenes.filter((s) => s.documentId === selectedDocumentId);
-    return {
-      docScenes,
-      text: formatDocumentPlain({
-        documentTitle: selectedDoc?.title ?? '문서',
-        scenes: docScenes,
-        beatNames: DEFAULT_BEAT_GUIDE.map((b) => b.nameKo),
-      }),
-    };
-  }
+  const documentScenes = useMemo(
+    () => scenes.filter((s) => s.documentId === selectedDocumentId),
+    [scenes, selectedDocumentId],
+  );
 
   if (!selectedDocumentId) {
     return (
@@ -474,6 +463,14 @@ export function SceneKanban() {
   return (
     <main className="canvas">
       {editingScene && <SceneKeepModal scene={editingScene} />}
+      {manuscriptOpen && (
+        <ManuscriptPreviewModal
+          projectTitle={projectTitle}
+          documentTitle={selectedDoc?.title ?? '문서'}
+          scenes={documentScenes}
+          onClose={() => setManuscriptOpen(false)}
+        />
+      )}
 
       <div className="canvas__toolbar">
         <div className="canvas__toolbar-start">
@@ -484,46 +481,18 @@ export function SceneKanban() {
             <button
               type="button"
               className="canvas__export-btn"
-              title="원고 복사"
-              aria-label="문서 원고를 클립보드에 복사"
+              title="전체 원고 보기"
+              aria-label="전체 원고 보기"
               onClick={() => {
-                void (async () => {
-                  const { docScenes, text } = documentPlainText();
-                  if (docScenes.length === 0) {
-                    showToast('복사할 씬이 없습니다', 'error');
-                    return;
-                  }
-                  const ok = await copyTextToClipboard(text);
-                  showToast(
-                    ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
-                    ok ? 'info' : 'error',
-                  );
-                })();
-              }}
-            >
-              <span className="material-symbols-rounded">content_copy</span>
-              원고 복사
-            </button>
-            <button
-              type="button"
-              className="canvas__export-btn"
-              title="텍스트 파일로 저장"
-              aria-label="문서 원고를 텍스트 파일로 저장"
-              onClick={() => {
-                const { docScenes, text } = documentPlainText();
-                if (docScenes.length === 0) {
-                  showToast('저장할 씬이 없습니다', 'error');
+                if (documentScenes.length === 0) {
+                  showToast('볼 씬이 없습니다', 'error');
                   return;
                 }
-                downloadTextFile(
-                  safeFilename(selectedDoc?.title ?? '문서'),
-                  text,
-                );
-                showToast('텍스트 파일을 저장했습니다');
+                setManuscriptOpen(true);
               }}
             >
-              <span className="material-symbols-rounded">download</span>
-              .txt 저장
+              <span className="material-symbols-rounded">menu_book</span>
+              전체 원고 보기
             </button>
           </div>
         </div>
