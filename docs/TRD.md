@@ -144,7 +144,7 @@ interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, upd
 | `connectWorkspace` / `connectWorkspaceFromHandle` | 피커·드롭 공통 워크스페이스 연결 |
 | `autosave` | dirty 시 500ms 디바운스 `saveAll` |
 | prune | 활성·trash 각각 keepIds 기준 orphan JSON 삭제 |
-| `exportText` | 씬/참고 평문·클립보드·`.txt`. 원고는 `formatManuscriptPlain`(프로젝트·문서 헤더, 구간 라벨 없음, 제목 토글). `manuscriptDownloadFilename` → `{프로젝트}_{문서}_{YYYYMMDD}_{HHmm}` |
+| `exportText` | 씬/참고 평문·클립보드·`.txt`. 원고는 `formatManuscriptPlain`·`sceneHasManuscriptContent`(프로젝트·문서 헤더, 구간 라벨 없음, 제목 토글). `manuscriptDownloadFilename` → `{프로젝트}_{문서}_{YYYYMMDD}_{HHmm}` |
 | `ManuscriptPreviewModal` | 전체 원고 보기: 구간 칩·인라인 제외 슬롯(`제목 - 본문`)·제목 스위치·푸터 복사/저장. 미리보기는 보더리스·호버 하이라이트 |
 
 `storageMode`: `none` | `folder` (ZIP/`memory` 제거).
