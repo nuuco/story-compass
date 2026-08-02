@@ -47,13 +47,14 @@ npm run build
 | 컴포넌트 | 역할 |
 |---|---|
 | `ExplorerSidebar` | 워크스페이스·프로젝트 트리·휴지통·폴더 연결 (CTA: 새 워크스페이스 / 기존 워크스페이스 열기) |
-| `TrashPanel` | 휴지통 목록·정렬·복원·영구삭제·비우기 |
+| `TrashPanel` | 휴지통 목록(본문 미리보기)·정렬·복원·영구삭제·비우기 |
 | `Toast` | 복사·저장 등 짧은 피드백 — `.app-toast` 진한 알약형(불투명·`--shadow-md`) |
 | `RouteNav` | 제목·프로그레스·1·2·3막·마커 |
 | `WorkspaceActions` | 저장 배지·테마·참고 토글 |
-| `SceneKanban` / `SceneCard` | 15열 칸반·삽입·DnD·비트 툴팁 |
+| `WorkspaceDndProvider` | 칸반·참고 공유 DnD (크로스 드롭 변환) |
+| `SceneKanban` / `SceneCard` | 15열 칸반·삽입·DnD·호버 아이콘바 |
 | `SceneKeepModal` / `ReferenceKeepModal` | 킵 스타일 편집 모달 |
-| `ReferenceDrawer` | 참고 목록·검색·태그 |
+| `ReferenceDrawer` | 참고 목록·검색·태그·ref-tray 드롭존 |
 | `RichTextEditor` | Toast UI 래퍼 |
 | `SearchInput` / `TagFilter` / `TagChipsInput` | 검색·다중 태그 |
 | `BeatGuideModal` | 비트 상세 안내 |
@@ -122,7 +123,7 @@ interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, upd
 
 ### 3.5 검증·삭제
 
-- 제목 공백: UI 빨간 안내(「제목을 입력하세요」). **저장은 막지 않음** — 카드에 「제목 없는 씬/메모」로 표시. 본문만 있는 노트 허용
+- 제목 공백: UI 빨간 안내(「제목을 입력하세요」). **저장은 막지 않음**. 리스트 카드는 제목 행 숨김 + `.card-excerpt--solo`(본문 6줄). 모달 제목 칸은 유지
 - `contentHtml` 빈값·빈 `<p></p>` 허용
 - `beatIndex` 0~14
 - 모달 닫을 때 **제목·본문 모두** 비면 `discardEmpty*` (휴지통 미포함 hard delete)
@@ -143,6 +144,10 @@ interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, upd
 | `exportText` | 씬/참고/문서 평문 변환·클립보드·`.txt` 다운로드 |
 
 `storageMode`: `none` | `folder` (ZIP/`memory` 제거).
+
+체험용 샘플 데이터: 저장소 루트 [`sample-workspace/`](../sample-workspace/) (스키마 v2).
+
+참고↔씬 변환: `convertReferenceToScene` / `convertSceneToReference` / `copySceneToReference` / `copyReferenceToScene` ([`projectSlice.ts`](../src/store/projectSlice.ts)). 드래그 처리는 [`workspaceDrag.ts`](../src/utils/workspaceDrag.ts).
 
 ---
 

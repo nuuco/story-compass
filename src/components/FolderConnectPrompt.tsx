@@ -41,6 +41,12 @@ export function FolderConnectPrompt() {
               한 폴더(워크스페이스) 안에 여러 프로젝트를 둘 수 있습니다.
               <br />
               작성한 글은 이 기기의 폴더에만 저장되며, 서버로 업로드되지 않습니다.
+              <br />
+              <span className="folder-connect-prompt__sample">
+                체험용 샘플은 저장소의{' '}
+                <code>sample-workspace</code> 폴더를 「기존 워크스페이스 열기」로
+                선택하세요.
+              </span>
             </>
           )}
         </p>

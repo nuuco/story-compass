@@ -37,7 +37,7 @@ export function BeatGuideModal({
       >
         <header className="beat-guide-modal__header">
           <div className="beat-guide-modal__eyebrow">
-            {act.nameKo} · {act.labelKo} · 비트 {beat.beatIndex + 1} ·{' '}
+            {act.nameKo} · {act.labelKo} · 구간 {beat.beatIndex + 1} ·{' '}
             {beat.percentHint}% · {beat.nameEn}
           </div>
           <h2 id="beat-guide-title" className="beat-guide-modal__title">
@@ -56,7 +56,7 @@ export function BeatGuideModal({
 
         <div className="beat-guide-modal__body">
           <section className="beat-guide-section">
-            <h3>이 비트의 역할</h3>
+            <h3>역할</h3>
             <p>{beat.purposeKo}</p>
           </section>
 

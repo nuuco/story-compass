@@ -1,0 +1,16 @@
+{
+  "deletedAt": "2026-07-30T11:20:00.000Z",
+  "scene": {
+    "id": "scene_trash_monologue",
+    "documentId": "doc_main",
+    "title": "",
+    "contentHtml": "<p>나는 왜 그때 돌아보지 않았을까. 세 페이지짜리 독백. 리듬이 죽어서 휴지통으로.</p>",
+    "beatIndex": 4,
+    "order": 1,
+    "tags": [
+      "독백"
+    ],
+    "createdAt": "2026-07-15T08:00:00.000Z",
+    "updatedAt": "2026-07-29T08:00:00.000Z"
+  }
+}

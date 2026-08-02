@@ -1,0 +1,14 @@
+{
+  "deletedAt": "2026-07-25T16:00:00.000Z",
+  "reference": {
+    "id": "ref_trash_outline",
+    "title": "초고 로그라인 (폐기)",
+    "contentHtml": "<p>시간을 되돌리는 기차에서 만난 아버지—너무 흔함. 각색 방향 바꿀 때 버림.</p>",
+    "tags": [
+      "폐기"
+    ],
+    "order": 0,
+    "createdAt": "2026-07-11T08:00:00.000Z",
+    "updatedAt": "2026-07-24T08:00:00.000Z"
+  }
+}

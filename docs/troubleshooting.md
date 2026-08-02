@@ -189,3 +189,36 @@ rm -rf node_modules/.vite && npm run dev
 
 - `src/index.css` (`.app-toast`, `.trash-panel`)
 - `src/components/Toast.tsx`
+
+---
+
+## 7. 참고↔칸반 드래그 이동 후 킵 모달이 열림
+
+### 증상
+
+참고 메모를 칸반으로(또는 씬을 참고 드로어로) **드래그해 옮기기만** 했는데, 드롭 직후 **킵 모달**이 열린다.  
+클릭으로 카드를 연 것처럼 보인다.
+
+### 원인
+
+1. **변환 후 자동 선택**  
+   `convertReferenceToScene` / `convertSceneToReference`가 새로 만든 씬·참고의 id를 `selectedSceneId` / `selectedReferenceId`에 넣고 있었다.  
+   칸반·드로어는 이 선택이 있으면 곧바로 `SceneKeepModal` / `ReferenceKeepModal`을 띄운다.  
+   드래그 이동은 “위치만 바꾸기”인데, 선택이 따라붙어 모달이 열렸다.
+
+2. **드롭 직후 click (부가)**  
+   `@dnd-kit` 드래그가 끝난 뒤 브라우저가 `click`을 한 번 더 보낼 수 있다.  
+   카드 `onClick` → `selectScene` / `selectReference`로도 모달이 열릴 수 있다.
+
+### 해결
+
+1. 변환(이동) 리듀서에서는 **선택 state를 세팅하지 않는다.** (원본 선택만 해제)
+2. 카드에서 `isDragging`이 true였으면 `suppressClickRef`로 직후 `click`을 무시하고, 드롭 후 짧게(약 80ms) 유지한 뒤 해제한다.
+
+메뉴의 「참고 메모로 이동」도 같은 convert 액션을 쓰므로, 이동만 하고 모달은 열지 않는 동작이 된다. 편집이 필요하면 카드를 다시 클릭한다.
+
+### 관련 파일
+
+- `src/store/projectSlice.ts` (`convertReferenceToScene`, `convertSceneToReference`)
+- `src/components/SceneCard.tsx` / `ReferenceDrawer.tsx` (`suppressClickRef`)
+- `src/utils/workspaceDrag.ts`

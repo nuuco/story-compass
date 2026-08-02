@@ -1,14 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
   useSortable,
@@ -18,9 +9,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   addReference,
+  copyReferenceToScene,
   deleteReference,
   nudgeReference,
-  placeReference,
   purgeReferenceTag,
   selectReference,
   setReferenceDrawerOpen,
@@ -62,6 +53,8 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
   const { showToast } = useToast();
+  const focusBeatIndex = useAppSelector((s) => s.project.focusBeatIndex);
+  const selectedDocumentId = useAppSelector((s) => s.project.selectedDocumentId);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const suppressClickRef = useRef(false);
@@ -72,10 +65,21 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: refNote.id });
+  } = useSortable({
+    id: refNote.id,
+    data: { type: 'reference', refId: refNote.id },
+  });
 
   useEffect(() => {
-    if (isDragging) suppressClickRef.current = true;
+    if (isDragging) {
+      suppressClickRef.current = true;
+      return;
+    }
+    if (!suppressClickRef.current) return;
+    const t = window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 80);
+    return () => window.clearTimeout(t);
   }, [isDragging]);
 
   const style = {
@@ -93,6 +97,25 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
   const plainExcerpt = previewHtml
     ? previewHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
     : '';
+
+  async function onCopyText() {
+    const text = formatNotePlain(refNote);
+    const ok = await copyTextToClipboard(text);
+    showToast(
+      ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
+      ok ? 'info' : 'error',
+    );
+  }
+
+  async function onDelete() {
+    const ok = await confirm({
+      title: '참고 메모를 삭제할까요?',
+      message: '삭제한 메모는 휴지통으로 이동합니다. 나중에 복원할 수 있습니다.',
+      confirmLabel: '휴지통으로',
+      danger: true,
+    });
+    if (ok) dispatch(deleteReference(refNote.id));
+  }
 
   return (
     <article
@@ -112,15 +135,44 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
       }}
     >
       <div
-        className="card-options"
+        className="card-options card-options--bar"
         onPointerDown={(e) => e.stopPropagation()}
       >
+        <button
+          type="button"
+          className="icon-btn icon-btn--danger"
+          aria-label="삭제"
+          title="삭제"
+          onClick={(e) => {
+            e.stopPropagation();
+            void onDelete();
+          }}
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: 18 }}>
+            delete
+          </span>
+        </button>
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="텍스트로 복사"
+          title="텍스트로 복사"
+          onClick={(e) => {
+            e.stopPropagation();
+            void onCopyText();
+          }}
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: 18 }}>
+            content_copy
+          </span>
+        </button>
         <button
           ref={menuBtnRef}
           type="button"
           className="icon-btn"
           aria-label="더보기"
           aria-expanded={menuOpen}
+          title="더보기"
           onClick={(e) => {
             e.stopPropagation();
             setMenuOpen((o) => !o);
@@ -135,71 +187,63 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
           anchorRef={menuBtnRef}
           onClose={() => setMenuOpen(false)}
         >
-          {(
-            [
-              ['top', '맨 위로'],
-              ['up', '위로'],
-              ['down', '아래로'],
-              ['bottom', '맨 아래로'],
-            ] as const
-          ).map(([dir, label]) => (
-            <button
-              key={dir}
-              type="button"
-              onClick={() => {
-                dispatch(nudgeReference({ id: refNote.id, dir }));
-                setMenuOpen(false);
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={() => {
+              dispatch(nudgeReference({ id: refNote.id, dir: 'top' }));
+              setMenuOpen(false);
+            }}
+          >
+            맨 위로
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              dispatch(nudgeReference({ id: refNote.id, dir: 'bottom' }));
+              setMenuOpen(false);
+            }}
+          >
+            맨 아래로
+          </button>
           <hr />
           <button
             type="button"
             onClick={() => {
+              if (!selectedDocumentId) {
+                showToast('문서를 먼저 선택하세요', 'error');
+                setMenuOpen(false);
+                return;
+              }
+              dispatch(
+                copyReferenceToScene({
+                  refId: refNote.id,
+                  beatIndex: focusBeatIndex ?? 0,
+                }),
+              );
               setMenuOpen(false);
-              void (async () => {
-                const text = formatNotePlain(refNote);
-                const ok = await copyTextToClipboard(text);
-                showToast(
-                  ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
-                  ok ? 'info' : 'error',
-                );
-              })();
+              showToast('칸반으로 복사했습니다');
             }}
           >
-            텍스트로 복사
+            칸반으로 복사
           </button>
-          <button
-            type="button"
-            className="danger"
-            onClick={() => {
-              setMenuOpen(false);
-              void (async () => {
-                const ok = await confirm({
-                  title: '참고 메모를 삭제할까요?',
-                  message: '삭제한 메모는 휴지통으로 이동합니다. 나중에 복원할 수 있습니다.',
-                  confirmLabel: '휴지통으로',
-                  danger: true,
-                });
-                if (ok) dispatch(deleteReference(refNote.id));
-              })();
-            }}
-          >
-            삭제
-          </button>
+          <p className="note-menu__hint">이동은 칸반으로 드래그</p>
         </NoteMenuPortal>
       </div>
 
-      <div className={`card-title ${title ? '' : 'empty'}`}>
-        {title || '제목 없는 메모'}
-      </div>
+      {title ? <div className="card-title">{title}</div> : null}
 
       {plainExcerpt ? (
-        <div className="card-excerpt">{plainExcerpt}</div>
+        <div
+          className={`card-excerpt ${title ? '' : 'card-excerpt--solo'}`.trim()}
+        >
+          {plainExcerpt}
+        </div>
       ) : (
-        <div className="card-excerpt empty">내용 없음</div>
+        <div
+          className={`card-excerpt empty ${title ? '' : 'card-excerpt--solo'}`.trim()}
+        >
+          내용 없음
+        </div>
       )}
 
       {refNote.tags.length > 0 && (
@@ -215,6 +259,18 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
   );
 }
 
+function RefTray({ children }: { children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: 'ref-tray' });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`reference-drawer__list scenes-container ${isOver ? 'is-drop-target' : ''}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function ReferenceDrawer() {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
@@ -225,11 +281,6 @@ export function ReferenceDrawer() {
     referenceSearchQuery,
     selectedReferenceId,
   } = useAppSelector((s) => s.project);
-  const [activeId, setActiveId] = useState<string | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
-  );
 
   const selectedTags = referenceTagFilter
     .map((t) => t.replace(/^#/, '').trim())
@@ -265,29 +316,6 @@ export function ReferenceDrawer() {
   const editing = selectedReferenceId
     ? references.find((r) => r.id === selectedReferenceId) ?? null
     : null;
-
-  const activeRef = activeId
-    ? filtered.find((r) => r.id === activeId) ?? null
-    : null;
-
-  function onDragStart(event: DragStartEvent) {
-    setActiveId(String(event.active.id));
-  }
-
-  function onDragEnd(event: DragEndEvent) {
-    setActiveId(null);
-    const { active, over } = event;
-    if (!over) return;
-    const activeRefId = String(active.id);
-    const overId = String(over.id);
-    if (activeRefId === overId) return;
-
-    const sorted = [...references].sort((a, b) => a.order - b.order);
-    const from = sorted.findIndex((r) => r.id === activeRefId);
-    const to = sorted.findIndex((r) => r.id === overId);
-    if (from < 0 || to < 0) return;
-    dispatch(placeReference({ id: activeRefId, order: to }));
-  }
 
   const emptyMessage =
     selectedTags.length > 0 || referenceSearchQuery.trim()
@@ -353,7 +381,10 @@ export function ReferenceDrawer() {
             ) : null}
           </div>
         </div>
-        <div className="reference-drawer__list scenes-container">
+        <RefTray>
+          <p className="panel-drag-hint reference-drawer__list-hint">
+            드래그로 순서 변경 · 칸반으로 이동
+          </p>
           {emptyMessage && filtered.length === 0 ? (
             <p
               style={{
@@ -366,40 +397,17 @@ export function ReferenceDrawer() {
               {emptyMessage}
             </p>
           ) : null}
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
+          <SortableContext
+            items={filtered.map((r) => r.id)}
+            strategy={verticalListSortingStrategy}
           >
-            <SortableContext
-              items={filtered.map((r) => r.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {filtered.map((ref) => (
-                <Fragment key={ref.id}>
-                  <RefInsertGap order={ref.order} />
-                  <ReferencePreviewCard refNote={ref} />
-                </Fragment>
-              ))}
-            </SortableContext>
-            <DragOverlay dropAnimation={null}>
-              {activeRef ? (
-                <div
-                  className="scene-card ref-preview-card scene-card--drag-overlay"
-                  style={{ width: 280 }}
-                >
-                  <div className="scene-card__drag-hint">
-                    <span className="material-symbols-rounded">open_with</span>
-                    이동
-                  </div>
-                  <div className="card-title">
-                    {activeRef.title.trim() || '제목 없는 메모'}
-                  </div>
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+            {filtered.map((ref) => (
+              <Fragment key={ref.id}>
+                <RefInsertGap order={ref.order} />
+                <ReferencePreviewCard refNote={ref} />
+              </Fragment>
+            ))}
+          </SortableContext>
           <button
             type="button"
             className="add-scene-btn"
@@ -410,7 +418,7 @@ export function ReferenceDrawer() {
             </span>
             메모 추가
           </button>
-        </div>
+        </RefTray>
       </aside>
     </div>
   );

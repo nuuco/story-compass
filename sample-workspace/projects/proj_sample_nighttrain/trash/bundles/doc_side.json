@@ -1,0 +1,25 @@
+{
+  "deletedAt": "2026-07-22T13:00:00.000Z",
+  "document": {
+    "id": "doc_side",
+    "title": "외전 · 아린의 하루",
+    "order": 1,
+    "createdAt": "2026-07-14T08:00:00.000Z",
+    "updatedAt": "2026-07-21T08:00:00.000Z"
+  },
+  "scenes": [
+    {
+      "id": "scene_side_01",
+      "documentId": "doc_side",
+      "title": "검표 전의 담배",
+      "contentHtml": "<p>아린은 승무원 휴게실에서 담배를 꺼내다 말고 다시 넣는다. 열차에는 불이 안 붙는다.</p>",
+      "beatIndex": 2,
+      "order": 0,
+      "tags": [
+        "외전"
+      ],
+      "createdAt": "2026-07-14T09:00:00.000Z",
+      "updatedAt": "2026-07-21T08:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "project": {
+    "id": "proj_sample_nighttrain",
+    "title": "밤기차의 손님",
+    "createdAt": "2026-07-10T10:00:00.000Z",
+    "updatedAt": "2026-08-01T14:30:00.000Z"
+  },
+  "activeDocumentId": "doc_main"
+}

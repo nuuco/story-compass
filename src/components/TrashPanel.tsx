@@ -150,42 +150,61 @@ export function TrashPanel() {
         {items.length === 0 ? (
           <p className="trash-panel__empty-msg">휴지통이 비어 있습니다.</p>
         ) : (
-          items.map((item) => (
-            <div key={`${item.kind}-${item.id}`} className="trash-panel__item">
-              <div className="trash-panel__item-main">
-                <span className="trash-panel__kind">
-                  {trashKindLabel(item.kind)}
-                </span>
-                <span className="trash-panel__item-title">{item.title}</span>
-                <span className="trash-panel__item-meta">
-                  삭제 {formatDate(item.deletedAt)}
-                  {' · '}
-                  생성 {formatDate(item.createdAt)}
-                </span>
-              </div>
-              <div className="trash-panel__item-actions">
-                <button
-                  type="button"
-                  title="복원"
-                  aria-label={`${item.title} 복원`}
-                  onClick={() => void onRestore(item.kind, item.id)}
-                >
-                  <span className="material-symbols-rounded">
-                    restore_from_trash
+          items.map((item) => {
+            const label = item.title || item.excerpt || trashKindLabel(item.kind);
+            return (
+              <div key={`${item.kind}-${item.id}`} className="trash-panel__item">
+                <div className="trash-panel__item-main">
+                  <span className="trash-panel__kind">
+                    {trashKindLabel(item.kind)}
                   </span>
-                </button>
-                <button
-                  type="button"
-                  className="is-danger"
-                  title="영구 삭제"
-                  aria-label={`${item.title} 영구 삭제`}
-                  onClick={() => void onPurge(item.kind, item.id, item.title)}
-                >
-                  <span className="material-symbols-rounded">delete_forever</span>
-                </button>
+                  {item.title ? (
+                    <span className="trash-panel__item-title">{item.title}</span>
+                  ) : null}
+                  {item.excerpt ? (
+                    <span
+                      className={`trash-panel__item-excerpt ${item.title ? '' : 'trash-panel__item-excerpt--solo'}`.trim()}
+                    >
+                      {item.excerpt}
+                    </span>
+                  ) : null}
+                  {!item.title && !item.excerpt ? (
+                    <span className="trash-panel__item-title is-muted">
+                      (내용 없음)
+                    </span>
+                  ) : null}
+                  <span className="trash-panel__item-meta">
+                    삭제 {formatDate(item.deletedAt)}
+                    {' · '}
+                    생성 {formatDate(item.createdAt)}
+                  </span>
+                </div>
+                <div className="trash-panel__item-actions">
+                  <button
+                    type="button"
+                    title="복원"
+                    aria-label={`${label} 복원`}
+                    onClick={() => void onRestore(item.kind, item.id)}
+                  >
+                    <span className="material-symbols-rounded">
+                      restore_from_trash
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="is-danger"
+                    title="영구 삭제"
+                    aria-label={`${label} 영구 삭제`}
+                    onClick={() => void onPurge(item.kind, item.id, label)}
+                  >
+                    <span className="material-symbols-rounded">
+                      delete_forever
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

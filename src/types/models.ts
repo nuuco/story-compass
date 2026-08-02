@@ -94,6 +94,8 @@ export interface TrashListItem {
   id: string;
   kind: TrashKind;
   title: string;
+  /** 씬/참고 본문 또는 문서 묶음 요약 미리보기 */
+  excerpt?: string;
   deletedAt: string;
   createdAt: string;
   /** 프로젝트 내부 항목일 때 소속 프로젝트 id */

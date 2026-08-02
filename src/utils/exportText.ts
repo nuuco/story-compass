@@ -53,7 +53,7 @@ export function formatDocumentPlain(opts: {
     const beatLabel =
       opts.beatNames?.[scene.beatIndex] != null
         ? `[${opts.beatNames[scene.beatIndex]}]`
-        : `[비트 ${scene.beatIndex + 1}]`;
+        : `[구간 ${scene.beatIndex + 1}]`;
     const title = scene.title.trim() || '(제목 없음)';
     const body = htmlToExportPlain(scene.contentHtml);
     const block = body

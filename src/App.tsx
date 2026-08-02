@@ -19,6 +19,7 @@ import { restoreFolderConnection } from './storage/restoreFolder';
 import { emptyProjectTrash } from './types/models';
 import { ExplorerSidebar } from './components/ExplorerSidebar';
 import { RouteNav } from './components/RouteNav';
+import { WorkspaceDndProvider } from './components/WorkspaceCanvas';
 import { SceneKanban } from './components/SceneKanban';
 import { ReferenceDrawer } from './components/ReferenceDrawer';
 import { FolderConnectPrompt } from './components/FolderConnectPrompt';
@@ -177,16 +178,24 @@ export default function App() {
     );
   }
 
+  const shell = (
+    <div className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <ExplorerSidebar />
+      <RouteNav />
+      {folderConnected ? <SceneKanban /> : <FolderConnectPrompt />}
+    </div>
+  );
+
   return (
     <>
-      <div
-        className={`app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}
-      >
-        <ExplorerSidebar />
-        <RouteNav />
-        {folderConnected ? <SceneKanban /> : <FolderConnectPrompt />}
-      </div>
-      {folderConnected ? <ReferenceDrawer /> : null}
+      {folderConnected ? (
+        <WorkspaceDndProvider>
+          {shell}
+          <ReferenceDrawer />
+        </WorkspaceDndProvider>
+      ) : (
+        shell
+      )}
       {workspaceLinked && trashPanelOpen ? <TrashPanel /> : null}
     </>
   );

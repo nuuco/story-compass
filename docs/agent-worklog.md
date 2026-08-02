@@ -282,3 +282,15 @@
 - 목적: 워크스페이스 CTA·제목 검증을 구현과 문서에 맞춤
 - 변경: CTA「새 워크스페이스」/「기존 워크스페이스 열기」, TRD JSZip 제거, 제목=빨간 안내만(저장 허용)·본문만 노트 허용을 PRD/SRS/TRD/README/AGENT_GUIDE/rules에 반영
 - 판정: 채택
+
+### 2026-08-02 — 제목 없는 카드 미리보기
+
+- 목적: 빈 제목 시 「제목 없음」 문구 대신 본문 위주 카드
+- 변경: SceneCard/참고 카드·드래그 오버레이에서 제목 행 숨김, `.card-excerpt--solo` 6줄, 모달 제목 칸 유지
+- 판정: 채택
+
+### 2026-08-02 — sample-workspace·카드 아이콘바·참고↔칸반
+
+- 목적: 체험용 샘플 폴더 + 참고/씬 양방향 이동·복사 UX
+- 변경: `sample-workspace/`, `WorkspaceDndProvider`, convert/copy 액션, 호버 아이콘바, 케밥 축소
+- 판정: 채택

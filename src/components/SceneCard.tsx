@@ -4,6 +4,8 @@ import { CSS } from '@dnd-kit/utilities';
 import type { Scene } from '../types/models';
 import { useAppDispatch } from '../store/hooks';
 import {
+  convertSceneToReference,
+  copySceneToReference,
   deleteScene,
   nudgeScene,
   selectScene,
@@ -12,8 +14,6 @@ import { copyTextToClipboard, formatNotePlain } from '../utils/exportText';
 import { NoteMenuPortal } from './NoteMenuPortal';
 import { useConfirm } from './ConfirmDialog';
 import { useToast } from './Toast';
-
-type NudgeDir = 'top' | 'up' | 'down' | 'bottom' | 'left' | 'right';
 
 interface SceneCardProps {
   scene: Scene;
@@ -33,21 +33,28 @@ export function SceneCard({ scene }: SceneCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: scene.id });
+  } = useSortable({
+    id: scene.id,
+    data: { type: 'scene', sceneId: scene.id },
+  });
 
   useEffect(() => {
-    if (isDragging) suppressClickRef.current = true;
+    if (isDragging) {
+      suppressClickRef.current = true;
+      return;
+    }
+    // 드롭 직후 따라오는 click 한 번 무시
+    if (!suppressClickRef.current) return;
+    const t = window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 80);
+    return () => window.clearTimeout(t);
   }, [isDragging]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   };
-
-  function runNudge(dir: NudgeDir) {
-    dispatch(nudgeScene({ id: scene.id, dir }));
-    setMenuOpen(false);
-  }
 
   const title = scene.title.trim();
   const previewHtml =
@@ -60,6 +67,25 @@ export function SceneCard({ scene }: SceneCardProps) {
   const plainExcerpt = previewHtml
     ? previewHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
     : '';
+
+  async function onCopyText() {
+    const text = formatNotePlain(scene);
+    const ok = await copyTextToClipboard(text);
+    showToast(
+      ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
+      ok ? 'info' : 'error',
+    );
+  }
+
+  async function onDelete() {
+    const ok = await confirm({
+      title: '씬을 삭제할까요?',
+      message: '삭제한 씬은 휴지통으로 이동합니다. 나중에 복원할 수 있습니다.',
+      confirmLabel: '휴지통으로',
+      danger: true,
+    });
+    if (ok) dispatch(deleteScene(scene.id));
+  }
 
   return (
     <article
@@ -80,15 +106,44 @@ export function SceneCard({ scene }: SceneCardProps) {
       }}
     >
       <div
-        className="card-options"
+        className="card-options card-options--bar"
         onPointerDown={(e) => e.stopPropagation()}
       >
+        <button
+          type="button"
+          className="icon-btn icon-btn--danger"
+          aria-label="삭제"
+          title="삭제"
+          onClick={(e) => {
+            e.stopPropagation();
+            void onDelete();
+          }}
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: 18 }}>
+            delete
+          </span>
+        </button>
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="텍스트로 복사"
+          title="텍스트로 복사"
+          onClick={(e) => {
+            e.stopPropagation();
+            void onCopyText();
+          }}
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: 18 }}>
+            content_copy
+          </span>
+        </button>
         <button
           ref={menuBtnRef}
           type="button"
           className="icon-btn"
           aria-label="더보기"
           aria-expanded={menuOpen}
+          title="더보기"
           onClick={(e) => {
             e.stopPropagation();
             setMenuOpen((o) => !o);
@@ -103,66 +158,63 @@ export function SceneCard({ scene }: SceneCardProps) {
           anchorRef={menuBtnRef}
           onClose={() => setMenuOpen(false)}
         >
-          {(
-            [
-              ['top', '맨 위로'],
-              ['up', '위로'],
-              ['down', '아래로'],
-              ['bottom', '맨 아래로'],
-              ['left', '왼쪽 (이전 비트)'],
-              ['right', '오른쪽 (다음 비트)'],
-            ] as const
-          ).map(([dir, label]) => (
-            <button key={dir} type="button" onClick={() => runNudge(dir)}>
-              {label}
-            </button>
-          ))}
+          <button
+            type="button"
+            onClick={() => {
+              dispatch(nudgeScene({ id: scene.id, dir: 'top' }));
+              setMenuOpen(false);
+            }}
+          >
+            맨 위로
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              dispatch(nudgeScene({ id: scene.id, dir: 'bottom' }));
+              setMenuOpen(false);
+            }}
+          >
+            맨 아래로
+          </button>
           <hr />
           <button
             type="button"
             onClick={() => {
+              dispatch(convertSceneToReference({ sceneId: scene.id }));
               setMenuOpen(false);
-              void (async () => {
-                const text = formatNotePlain(scene);
-                const ok = await copyTextToClipboard(text);
-                showToast(
-                  ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
-                  ok ? 'info' : 'error',
-                );
-              })();
+              showToast('참고 메모로 옮겼습니다');
             }}
           >
-            텍스트로 복사
+            참고 메모로 이동
           </button>
+          <p className="note-menu__hint">또는 참고 패널로 드래그</p>
           <button
             type="button"
-            className="danger"
             onClick={() => {
+              dispatch(copySceneToReference({ sceneId: scene.id }));
               setMenuOpen(false);
-              void (async () => {
-                const ok = await confirm({
-                  title: '씬을 삭제할까요?',
-                  message: '삭제한 씬은 휴지통으로 이동합니다. 나중에 복원할 수 있습니다.',
-                  confirmLabel: '휴지통으로',
-                  danger: true,
-                });
-                if (ok) dispatch(deleteScene(scene.id));
-              })();
+              showToast('참고로 복사했습니다');
             }}
           >
-            삭제
+            참고로 복사
           </button>
         </NoteMenuPortal>
       </div>
 
-      <div className={`card-title ${title ? '' : 'empty'}`}>
-        {title || '제목 없는 씬'}
-      </div>
+      {title ? <div className="card-title">{title}</div> : null}
 
       {plainExcerpt ? (
-        <div className="card-excerpt">{plainExcerpt}</div>
+        <div
+          className={`card-excerpt ${title ? '' : 'card-excerpt--solo'}`.trim()}
+        >
+          {plainExcerpt}
+        </div>
       ) : (
-        <div className="card-excerpt empty">내용 없음</div>
+        <div
+          className={`card-excerpt empty ${title ? '' : 'card-excerpt--solo'}`.trim()}
+        >
+          내용 없음
+        </div>
       )}
 
       {scene.tags.length > 0 && (

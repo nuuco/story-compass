@@ -1,0 +1,16 @@
+{
+  "deletedAt": "2026-07-28T09:00:00.000Z",
+  "scene": {
+    "id": "scene_trash_oldopen",
+    "documentId": "doc_main",
+    "title": "너무 설명적인 오프닝",
+    "contentHtml": "<p>서연은 슬펐다. 아버지는 아팠다. 기차는 늦었다. (삭제 예정—보여주기 실패)</p>",
+    "beatIndex": 0,
+    "order": 0,
+    "tags": [
+      "삭제후보"
+    ],
+    "createdAt": "2026-07-12T08:00:00.000Z",
+    "updatedAt": "2026-07-20T08:00:00.000Z"
+  }
+}

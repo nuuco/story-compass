@@ -1,14 +1,4 @@
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  closestCenter,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
+import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -28,7 +18,6 @@ import type { BeatGuideItem } from '../types/models';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
   addScene,
-  placeScene,
   purgeSceneTag,
   selectScene,
   setCenterSearchQuery,
@@ -194,7 +183,7 @@ function BeatColumn({
           className="beat-header__focus"
           onClick={() => scrollBeatColumnIntoView(beatIndex)}
           aria-pressed={focused}
-          aria-label={`${nameKo} 비트로 스크롤`}
+          aria-label={`${nameKo} 열로 스크롤`}
           onFocus={() => setTipOpen(true)}
           onBlur={(e) => {
             if (!headerRef.current?.contains(e.relatedTarget as Node)) {
@@ -270,7 +259,6 @@ export function SceneKanban() {
     focusBeatIndex,
     documents,
   } = useAppSelector((s) => s.project);
-  const [activeId, setActiveId] = useState<string | null>(null);
   const [guideBeatIndex, setGuideBeatIndex] = useState<number | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const focusBeatRef = useRef(focusBeatIndex);
@@ -285,10 +273,6 @@ export function SceneKanban() {
     moved: boolean;
   } | null>(null);
   const suppressClickRef = useRef(false);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
-  );
 
   function updateBoardScrollButtons() {
     const el = boardRef.current;
@@ -450,10 +434,6 @@ export function SceneKanban() {
       ? (DEFAULT_BEAT_GUIDE[guideBeatIndex] ?? null)
       : null;
 
-  const activeScene = activeId
-    ? docScenes.find((s) => s.id === activeId) ?? null
-    : null;
-
   const selectedDoc = documents.find((d) => d.id === selectedDocumentId);
 
   if (!selectedDocumentId) {
@@ -469,116 +449,57 @@ export function SceneKanban() {
     );
   }
 
-  function onDragStart(event: DragStartEvent) {
-    setActiveId(String(event.active.id));
-  }
-
-  function onDragEnd(event: DragEndEvent) {
-    setActiveId(null);
-    const { active, over } = event;
-    if (!over || !selectedDocumentId) return;
-    const activeSceneId = String(active.id);
-    if (activeSceneId === String(over.id)) return;
-
-    const moving = scenes.find((s) => s.id === activeSceneId);
-    if (!moving) return;
-
-    const overId = String(over.id);
-    let targetBeat = moving.beatIndex;
-    let targetOrder = moving.order;
-
-    if (overId.startsWith('beat-')) {
-      targetBeat = Number(overId.replace('beat-', ''));
-      targetOrder = scenes.filter(
-        (s) =>
-          s.documentId === selectedDocumentId &&
-          s.beatIndex === targetBeat &&
-          s.id !== activeSceneId,
-      ).length;
-    } else {
-      const overScene = scenes.find((s) => s.id === overId);
-      if (!overScene) return;
-      targetBeat = overScene.beatIndex;
-
-      if (moving.beatIndex === targetBeat) {
-        // 같은 칸: 시각적 arrayMove와 동일한 인덱스 사용
-        const col = scenes
-          .filter(
-            (s) =>
-              s.documentId === selectedDocumentId &&
-              s.beatIndex === targetBeat,
-          )
-          .sort((a, b) => a.order - b.order);
-        const oldIndex = col.findIndex((s) => s.id === activeSceneId);
-        const newIndex = col.findIndex((s) => s.id === overId);
-        if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
-        targetOrder = newIndex;
-      } else {
-        // 다른 칸: over 카드 중심 기준으로 앞/뒤 삽입
-        const col = scenes
-          .filter(
-            (s) =>
-              s.documentId === selectedDocumentId &&
-              s.beatIndex === targetBeat &&
-              s.id !== activeSceneId,
-          )
-          .sort((a, b) => a.order - b.order);
-        const overIndex = col.findIndex((s) => s.id === overId);
-        if (overIndex < 0) {
-          targetOrder = col.length;
-        } else {
-          const overRect = over.rect;
-          const activeRect =
-            active.rect.current.translated ?? active.rect.current.initial;
-          if (overRect && activeRect) {
-            const activeCenterY = activeRect.top + activeRect.height / 2;
-            const overMidY = overRect.top + overRect.height / 2;
-            targetOrder =
-              activeCenterY > overMidY ? overIndex + 1 : overIndex;
-          } else {
-            targetOrder = overIndex;
-          }
-        }
-      }
-    }
-
-    if (
-      moving.beatIndex === targetBeat &&
-      moving.order === targetOrder
-    ) {
-      return;
-    }
-
-    dispatch(
-      placeScene({
-        id: activeSceneId,
-        beatIndex: targetBeat,
-        order: targetOrder,
-      }),
-    );
-  }
-
   return (
     <main className="canvas">
       {editingScene && <SceneKeepModal scene={editingScene} />}
 
       <div className="canvas__toolbar">
-        <span className="canvas__toolbar-title">
-          {selectedDoc?.title ?? '문서'}
-        </span>
-        <div className="canvas__toolbar-export">
-          <button
-            type="button"
-            className="canvas__export-btn"
-            title="원고 복사"
-            aria-label="문서 원고를 클립보드에 복사"
-            onClick={() => {
-              void (async () => {
+        <div className="canvas__toolbar-start">
+          <span className="canvas__toolbar-title">
+            {selectedDoc?.title ?? '문서'}
+          </span>
+          <div className="canvas__toolbar-export">
+            <button
+              type="button"
+              className="canvas__export-btn"
+              title="원고 복사"
+              aria-label="문서 원고를 클립보드에 복사"
+              onClick={() => {
+                void (async () => {
+                  const docScenes = scenes.filter(
+                    (s) => s.documentId === selectedDocumentId,
+                  );
+                  if (docScenes.length === 0) {
+                    showToast('복사할 씬이 없습니다', 'error');
+                    return;
+                  }
+                  const text = formatDocumentPlain({
+                    documentTitle: selectedDoc?.title ?? '문서',
+                    scenes: docScenes,
+                    beatNames: DEFAULT_BEAT_GUIDE.map((b) => b.nameKo),
+                  });
+                  const ok = await copyTextToClipboard(text);
+                  showToast(
+                    ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
+                    ok ? 'info' : 'error',
+                  );
+                })();
+              }}
+            >
+              <span className="material-symbols-rounded">content_copy</span>
+              원고 복사
+            </button>
+            <button
+              type="button"
+              className="canvas__export-btn"
+              title="텍스트 파일로 저장"
+              aria-label="문서 원고를 텍스트 파일로 저장"
+              onClick={() => {
                 const docScenes = scenes.filter(
                   (s) => s.documentId === selectedDocumentId,
                 );
                 if (docScenes.length === 0) {
-                  showToast('복사할 씬이 없습니다', 'error');
+                  showToast('저장할 씬이 없습니다', 'error');
                   return;
                 }
                 const text = formatDocumentPlain({
@@ -586,45 +507,17 @@ export function SceneKanban() {
                   scenes: docScenes,
                   beatNames: DEFAULT_BEAT_GUIDE.map((b) => b.nameKo),
                 });
-                const ok = await copyTextToClipboard(text);
-                showToast(
-                  ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
-                  ok ? 'info' : 'error',
+                downloadTextFile(
+                  safeFilename(selectedDoc?.title ?? '문서'),
+                  text,
                 );
-              })();
-            }}
-          >
-            <span className="material-symbols-rounded">content_copy</span>
-            원고 복사
-          </button>
-          <button
-            type="button"
-            className="canvas__export-btn"
-            title="텍스트 파일로 저장"
-            aria-label="문서 원고를 텍스트 파일로 저장"
-            onClick={() => {
-              const docScenes = scenes.filter(
-                (s) => s.documentId === selectedDocumentId,
-              );
-              if (docScenes.length === 0) {
-                showToast('저장할 씬이 없습니다', 'error');
-                return;
-              }
-              const text = formatDocumentPlain({
-                documentTitle: selectedDoc?.title ?? '문서',
-                scenes: docScenes,
-                beatNames: DEFAULT_BEAT_GUIDE.map((b) => b.nameKo),
-              });
-              downloadTextFile(
-                safeFilename(selectedDoc?.title ?? '문서'),
-                text,
-              );
-              showToast('텍스트 파일을 저장했습니다');
-            }}
-          >
-            <span className="material-symbols-rounded">download</span>
-            .txt 저장
-          </button>
+                showToast('텍스트 파일을 저장했습니다');
+              }}
+            >
+              <span className="material-symbols-rounded">download</span>
+              .txt 저장
+            </button>
+          </div>
         </div>
         <div className="canvas__toolbar-tools">
           <SearchInput
@@ -679,96 +572,76 @@ export function SceneKanban() {
         </p>
       ) : null}
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-      >
-        <div className="board-viewport">
-          <div
-            className={`board-scroll-zone board-scroll-zone--left ${canScrollLeft ? 'active' : ''}`}
+      <div className="board-viewport">
+        <div
+          className={`board-scroll-zone board-scroll-zone--left ${canScrollLeft ? 'active' : ''}`}
+        >
+          <button
+            type="button"
+            className="board-scroll-btn"
+            aria-label="왼쪽으로 스크롤"
+            disabled={!canScrollLeft}
+            onClick={() => scrollBoard('left')}
           >
-            <button
-              type="button"
-              className="board-scroll-btn"
-              aria-label="왼쪽으로 스크롤"
-              disabled={!canScrollLeft}
-              onClick={() => scrollBoard('left')}
-            >
-              <span className="material-symbols-rounded">chevron_left</span>
-            </button>
-          </div>
-          <div
-            className={`board-scroll-zone board-scroll-zone--right ${canScrollRight ? 'active' : ''}`}
-          >
-            <button
-              type="button"
-              className="board-scroll-btn"
-              aria-label="오른쪽으로 스크롤"
-              disabled={!canScrollRight}
-              onClick={() => scrollBoard('right')}
-            >
-              <span className="material-symbols-rounded">chevron_right</span>
-            </button>
-          </div>
-          <div
-            className={`board ${isPanning ? 'is-panning' : ''}`}
-            ref={boardRef}
-            onPointerDown={onBoardPointerDown}
-            onPointerMove={onBoardPointerMove}
-            onPointerUp={endBoardPan}
-            onPointerCancel={endBoardPan}
-            onClickCapture={(e) => {
-              if (!suppressClickRef.current) return;
-              e.preventDefault();
-              e.stopPropagation();
-              suppressClickRef.current = false;
-            }}
-          >
-            {DEFAULT_BEAT_GUIDE.map((beat) => {
-              const colScenes = docScenes
-                .filter((s) => s.beatIndex === beat.beatIndex)
-                .sort((a, b) => a.order - b.order);
-              const act = getBeatAct(beat.beatIndex);
-              const actMeta = getActGuide(act);
-              const isActStart =
-                beat.beatIndex === 0 ||
-                getBeatAct(beat.beatIndex - 1) !== act;
-              return (
-                <BeatColumn
-                  key={beat.beatIndex}
-                  beatIndex={beat.beatIndex}
-                  nameKo={beat.nameKo}
-                  scenes={colScenes}
-                  documentId={selectedDocumentId}
-                  focused={focusBeatIndex === beat.beatIndex}
-                  onOpenGuide={setGuideBeatIndex}
-                  actStart={isActStart && beat.beatIndex > 0}
-                  actLabel={
-                    isActStart
-                      ? `${actMeta.nameKo} · ${actMeta.labelKo}`
-                      : undefined
-                  }
-                />
-              );
-            })}
-          </div>
+            <span className="material-symbols-rounded">chevron_left</span>
+          </button>
         </div>
-        <DragOverlay dropAnimation={null}>
-          {activeScene ? (
-            <div className="scene-card scene-card--drag-overlay" style={{ width: 280 }}>
-              <div className="scene-card__drag-hint">
-                <span className="material-symbols-rounded">open_with</span>
-                이동
-              </div>
-              <div className="card-title">
-                {activeScene.title.trim() || '제목 없는 씬'}
-              </div>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+        <div
+          className={`board-scroll-zone board-scroll-zone--right ${canScrollRight ? 'active' : ''}`}
+        >
+          <button
+            type="button"
+            className="board-scroll-btn"
+            aria-label="오른쪽으로 스크롤"
+            disabled={!canScrollRight}
+            onClick={() => scrollBoard('right')}
+          >
+            <span className="material-symbols-rounded">chevron_right</span>
+          </button>
+        </div>
+        <div
+          className={`board ${isPanning ? 'is-panning' : ''}`}
+          ref={boardRef}
+          onPointerDown={onBoardPointerDown}
+          onPointerMove={onBoardPointerMove}
+          onPointerUp={endBoardPan}
+          onPointerCancel={endBoardPan}
+          onClickCapture={(e) => {
+            if (!suppressClickRef.current) return;
+            e.preventDefault();
+            e.stopPropagation();
+            suppressClickRef.current = false;
+          }}
+        >
+          {DEFAULT_BEAT_GUIDE.map((beat) => {
+            const colScenes = docScenes
+              .filter((s) => s.beatIndex === beat.beatIndex)
+              .sort((a, b) => a.order - b.order);
+            const act = getBeatAct(beat.beatIndex);
+            const actMeta = getActGuide(act);
+            const isActStart =
+              beat.beatIndex === 0 ||
+              getBeatAct(beat.beatIndex - 1) !== act;
+            return (
+              <BeatColumn
+                key={beat.beatIndex}
+                beatIndex={beat.beatIndex}
+                nameKo={beat.nameKo}
+                scenes={colScenes}
+                documentId={selectedDocumentId}
+                focused={focusBeatIndex === beat.beatIndex}
+                onOpenGuide={setGuideBeatIndex}
+                actStart={isActStart && beat.beatIndex > 0}
+                actLabel={
+                  isActStart
+                    ? `${actMeta.nameKo} · ${actMeta.labelKo}`
+                    : undefined
+                }
+              />
+            );
+          })}
+        </div>
+      </div>
       {guideBeat && (
         <BeatGuideModal
           beat={guideBeat}

@@ -565,6 +565,129 @@ const projectSlice = createSlice({
       ensureReferenceOrders(state);
       markDirty(state);
     },
+    /** 참고 → 씬 (이동). 참고 제거 후 활성 문서 비트에 삽입 */
+    convertReferenceToScene(
+      state,
+      action: PayloadAction<{
+        refId: string;
+        beatIndex: number;
+        order?: number;
+      }>,
+    ) {
+      const docId = state.selectedDocumentId;
+      if (!docId) return;
+      const idx = state.references.findIndex((r) => r.id === action.payload.refId);
+      if (idx < 0) return;
+      const [ref] = state.references.splice(idx, 1);
+      if (state.selectedReferenceId === ref.id) state.selectedReferenceId = null;
+      ensureReferenceOrders(state);
+
+      const bi = Math.min(14, Math.max(0, action.payload.beatIndex));
+      const siblings = state.scenes.filter(
+        (s) => s.documentId === docId && s.beatIndex === bi,
+      );
+      let order = siblings.length;
+      if (action.payload.order !== undefined) {
+        order = Math.min(siblings.length, Math.max(0, Math.floor(action.payload.order)));
+        for (const s of siblings) {
+          if (s.order >= order) s.order += 1;
+        }
+      }
+      const ts = nowIso();
+      const scene: Scene = {
+        id: createId('scene'),
+        documentId: docId,
+        title: ref.title,
+        contentHtml: ref.contentHtml,
+        beatIndex: bi,
+        order,
+        tags: [...ref.tags],
+        createdAt: ref.createdAt,
+        updatedAt: ts,
+      };
+      state.scenes.push(scene);
+      // 드래그 이동 직후 모달이 열리지 않도록 선택하지 않음
+      markDirty(state);
+    },
+    /** 씬 → 참고 (이동) */
+    convertSceneToReference(
+      state,
+      action: PayloadAction<{ sceneId: string; order?: number }>,
+    ) {
+      const idx = state.scenes.findIndex((s) => s.id === action.payload.sceneId);
+      if (idx < 0) return;
+      const [scene] = state.scenes.splice(idx, 1);
+      if (state.selectedSceneId === scene.id) state.selectedSceneId = null;
+      renumberBeat(state, scene.documentId, scene.beatIndex);
+
+      let order = state.references.length;
+      if (action.payload.order !== undefined) {
+        order = Math.min(
+          state.references.length,
+          Math.max(0, Math.floor(action.payload.order)),
+        );
+        for (const r of state.references) {
+          if (r.order >= order) r.order += 1;
+        }
+      }
+      const ts = nowIso();
+      const ref: ReferenceNote = {
+        id: createId('ref'),
+        title: scene.title,
+        contentHtml: scene.contentHtml,
+        tags: [...scene.tags],
+        order,
+        createdAt: scene.createdAt,
+        updatedAt: ts,
+      };
+      state.references.push(ref);
+      markDirty(state);
+    },
+    /** 씬 → 참고 복사 (원본 유지) */
+    copySceneToReference(state, action: PayloadAction<{ sceneId: string }>) {
+      const scene = state.scenes.find((s) => s.id === action.payload.sceneId);
+      if (!scene) return;
+      const ts = nowIso();
+      const ref: ReferenceNote = {
+        id: createId('ref'),
+        title: scene.title,
+        contentHtml: scene.contentHtml,
+        tags: [...scene.tags],
+        order: state.references.length,
+        createdAt: ts,
+        updatedAt: ts,
+      };
+      state.references.push(ref);
+      markDirty(state);
+    },
+    /** 참고 → 씬 복사 (원본 유지) */
+    copyReferenceToScene(
+      state,
+      action: PayloadAction<{ refId: string; beatIndex: number }>,
+    ) {
+      const docId = state.selectedDocumentId;
+      if (!docId) return;
+      const ref = state.references.find((r) => r.id === action.payload.refId);
+      if (!ref) return;
+      const bi = Math.min(14, Math.max(0, action.payload.beatIndex));
+      const siblings = state.scenes.filter(
+        (s) => s.documentId === docId && s.beatIndex === bi,
+      );
+      const ts = nowIso();
+      const scene: Scene = {
+        id: createId('scene'),
+        documentId: docId,
+        title: ref.title,
+        contentHtml: ref.contentHtml,
+        beatIndex: bi,
+        order: siblings.length,
+        tags: [...ref.tags],
+        createdAt: ts,
+        updatedAt: ts,
+      };
+      state.scenes.push(scene);
+      markDirty(state);
+    },
     /** 활성 프로젝트 trash 항목 복원 (project kind는 projectConnection에서 처리) */
     restoreTrashItem(
       state,
@@ -826,6 +949,10 @@ export const {
   nudgeReference,
   updateReference,
   deleteReference,
+  convertReferenceToScene,
+  convertSceneToReference,
+  copySceneToReference,
+  copyReferenceToScene,
   restoreTrashItem,
   purgeTrashItem,
   clearProjectTrash,

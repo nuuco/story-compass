@@ -157,7 +157,7 @@ export function RouteNav() {
           </span>
         </div>
         <span className="progress-label__coverage" title={`${progress}% 채워짐`}>
-          씬 비트 {coveredCount}/15
+          채움 {coveredCount}/15
         </span>
       </div>
 
