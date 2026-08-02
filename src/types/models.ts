@@ -33,7 +33,7 @@ export interface DocumentMeta {
   updatedAt: string;
 }
 
-/** 과제 Note에 대응 */
+/** Note에 대응하는 집필 단위 */
 export interface Scene {
   id: string;
   documentId: string;

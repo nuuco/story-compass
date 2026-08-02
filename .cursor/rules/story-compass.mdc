@@ -1,5 +1,5 @@
 ---
-description: 스토리나침반 과제7 작업 경계
+description: 스토리나침반 작업 경계
 globs:
   - "**/*"
 ---
