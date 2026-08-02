@@ -106,4 +106,4 @@
 - 문서 현행화: 전체 원고 보기(SRS/TRD/PRD/README/AGENTS/worklog) 동기화
 - 점검: 빈 원고 헤더만 내보내기 가드·미사용 safeFilename 제거·SRS 검증 시나리오
 - README: 배포 URL·사용자 사용 안내 추가, 라이선스 절 제거
-- sample-workspace: 밤기차 3막 씬(암흑·진입·피날레·파이널) 추가
+- README: 화면 스크린샷(연결·칸반·참고·편집·원고) 첨부
