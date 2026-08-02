@@ -42,6 +42,18 @@ function sortScenesByBeatOrder(scenes: Scene[]): Scene[] {
   });
 }
 
+/** 평문/내보내기에 블록이 생기는지 (헤더 제외) */
+export function sceneHasManuscriptContent(
+  scene: Scene,
+  includeSceneTitles: boolean,
+): boolean {
+  const title = scene.title.trim();
+  const body = htmlToExportPlain(scene.contentHtml);
+  if (!title && !body) return false;
+  if (includeSceneTitles && title) return true;
+  return Boolean(body);
+}
+
 /** 구간 라벨 없는 원고 평문 — 프로젝트·문서 헤더 + 씬 본문 */
 export function formatManuscriptPlain(opts: {
   projectTitle: string;
@@ -55,9 +67,9 @@ export function formatManuscriptPlain(opts: {
   const parts: string[] = [project, document];
 
   for (const scene of sorted) {
+    if (!sceneHasManuscriptContent(scene, opts.includeSceneTitles)) continue;
     const title = scene.title.trim();
     const body = htmlToExportPlain(scene.contentHtml);
-    if (!title && !body) continue;
 
     if (opts.includeSceneTitles && title) {
       parts.push(body ? `${title}\n\n${body}` : title);
@@ -132,9 +144,4 @@ export function downloadTextFile(filename: string, text: string): void {
   a.download = filename.endsWith('.txt') ? filename : `${filename}.txt`;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-export function safeFilename(name: string): string {
-  const trimmed = name.trim() || 'export';
-  return trimmed.replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80);
 }

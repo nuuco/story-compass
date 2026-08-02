@@ -8,6 +8,7 @@ import {
   formatManuscriptPlain,
   htmlToExportPlain,
   manuscriptDownloadFilename,
+  sceneHasManuscriptContent,
 } from '../utils/exportText';
 import { useToast } from './Toast';
 
@@ -79,15 +80,23 @@ export function ManuscriptPreviewModal({
     [candidates, excludedIds],
   );
 
+  const exportableScenes = useMemo(
+    () =>
+      includedScenes.filter((s) =>
+        sceneHasManuscriptContent(s, includeTitles),
+      ),
+    [includedScenes, includeTitles],
+  );
+
   const plainText = useMemo(
     () =>
       formatManuscriptPlain({
         projectTitle,
         documentTitle,
-        scenes: includedScenes,
+        scenes: exportableScenes,
         includeSceneTitles: includeTitles,
       }),
-    [projectTitle, documentTitle, includedScenes, includeTitles],
+    [projectTitle, documentTitle, exportableScenes, includeTitles],
   );
 
   function toggleSection(index: number) {
@@ -118,8 +127,8 @@ export function ManuscriptPreviewModal({
   }
 
   async function handleCopy() {
-    if (includedScenes.length === 0) {
-      showToast('복사할 씬이 없습니다', 'error');
+    if (exportableScenes.length === 0) {
+      showToast('복사할 내용이 없습니다', 'error');
       return;
     }
     const ok = await copyTextToClipboard(plainText);
@@ -130,8 +139,8 @@ export function ManuscriptPreviewModal({
   }
 
   function handleDownload() {
-    if (includedScenes.length === 0) {
-      showToast('저장할 씬이 없습니다', 'error');
+    if (exportableScenes.length === 0) {
+      showToast('저장할 내용이 없습니다', 'error');
       return;
     }
     downloadTextFile(
