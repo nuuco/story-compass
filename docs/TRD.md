@@ -148,7 +148,8 @@ interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, upd
 
 `storageMode`: `none` | `folder` (ZIP/`memory` 제거).
 
-체험용 샘플 데이터: 저장소 루트 [`sample-workspace/`](../sample-workspace/) (스키마 v2).
+체험용 샘플 데이터: 저장소 루트 [`sample-workspace/`](../sample-workspace/) (스키마 v2).  
+미연결 시 피커 또는 연결 화면에 폴더 드롭으로 연다.
 
 참고↔씬 변환: `convertReferenceToScene` / `convertSceneToReference` / `copySceneToReference` / `copyReferenceToScene` ([`projectSlice.ts`](../src/store/projectSlice.ts)). 드래그 처리는 [`workspaceDrag.ts`](../src/utils/workspaceDrag.ts).
 
