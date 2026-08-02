@@ -1,11 +1,11 @@
 # 스토리나침반 — 구현 계획 (Implementation Plan · Task List)
 
-> 과제 7 제출용. Cursor Plan의 저장소 대응본.  
-> 현행 구현 기준(2026-08-01)으로 정리.
+> Cursor Plan의 저장소 대응본.  
+> 현행 구현 기준으로 정리.
 
 ## 목적
 
-과제 운영 필수(Scene=Note CRUD) + TypeScript + RTK + 로컬 워크스페이스 폴더 저장을 충족하는 스토리나침반을 하네스·루프 방식으로 완성한다.
+Scene(=Note) CRUD + TypeScript + RTK + 로컬 워크스페이스 폴더 저장을 충족하는 스토리나침반을 하네스·루프 방식으로 완성한다.
 
 ## 사람 승인 기록
 

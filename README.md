@@ -68,11 +68,11 @@ Chrome 또는 Edge에서 여는 것을 권장합니다. (로컬 폴더 저장은
 
 ## 개발자용
 
-과제 7 — React · TypeScript · Redux Toolkit · Agentic(하네스·루프) 개발 증거 포함.
+React · TypeScript · Redux Toolkit · Agentic(하네스·루프) 개발 기록을 포함합니다.
 
-### 공식·운영 필수 매핑
+### 핵심 매핑
 
-| 과제 | 본 앱 |
+| 개념 | 본 앱 |
 |---|---|
 | Note | Scene (`scenes/*.json`) |
 | 목록·작성·확인·수정·삭제 | 씬 CRUD + `updatedAt` (삭제 → 앱 휴지통) |

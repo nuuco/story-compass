@@ -3,7 +3,7 @@
 Software Requirements Specification. **무엇을 반드시 만족하는지** 정의한다.  
 제품 비전은 [PRD.md](./PRD.md), 구현 방식은 [TRD.md](./TRD.md).
 
-과제 7(React 노트 앱 · Agentic) 채점·검증의 기준 문서이다.
+제품 요구·검증의 기준 문서이다.
 
 ---
 
@@ -11,7 +11,7 @@ Software Requirements Specification. **무엇을 반드시 만족하는지** 정
 
 | 구분 | 설명 |
 |---|---|
-| 과제 제출 범위 | React + TypeScript + 상태관리 + Scene(=Note) 운영 필수 6기능 + 로컬 워크스페이스 폴더 저장 |
+| 제품 범위 | React + TypeScript + 상태관리 + Scene(=Note) CRUD 6기능 + 로컬 워크스페이스 폴더 저장 |
 | 제품 확장 | PRD의 15비트·칸반·참고·검색·막 구분 등 (Should로 구현됨) |
 
 구현·검증은 아래 **Must**를 우선한다.
@@ -25,11 +25,11 @@ Software Requirements Specification. **무엇을 반드시 만족하는지** 정
 | React 노트 앱 | `npm run dev`로 실행 가능 |
 | 상태관리 | Redux Toolkit — 씬(노트) 원본은 store에서만 관리 |
 | TypeScript | Scene·Props·store 타입, `any` 최소화 |
-| 저장소 URL | 평가자 접근 가능 주소 (제출 시) |
+| 저장소 URL | 공개 저장소·배포 주소 (예: README의 웹 앱 링크) |
 
 ---
 
-## 3. 운영 필수 6기능 (Scene = Note)
+## 3. 핵심 CRUD 6기능 (Scene = Note)
 
 | # | 기능 | 확인 기준 |
 |---:|---|---|
@@ -42,7 +42,7 @@ Software Requirements Specification. **무엇을 반드시 만족하는지** 정
 
 ### 도메인 매핑
 
-| 과제 용어 | 스토리나침반 |
+| 일반 용어 | 스토리나침반 |
 |---|---|
 | Note | Scene (`scenes/{id}.json`) |
 | 노트 목록 | 활성 문서의 씬 칸반 |
@@ -94,7 +94,7 @@ Software Requirements Specification. **무엇을 반드시 만족하는지** 정
 - 씬/참고 텍스트 복사 + 전체 원고 보기 모달 + 앱 토스트 (불투명 알약형 `.app-toast`)
 - 칸반 좌우 호버 스크롤·빈 영역 드래그 팬
 
-### 4.3 Won’t (이번 제출)
+### 4.3 Won’t (현재 범위 밖)
 
 - Google Drive OAuth·실시간 동기화
 - 인증·협업·자동 배포·실사용자 개인정보
