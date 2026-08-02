@@ -1,6 +1,6 @@
 # AGENTS.md — 작업 이력
 
-- 과제7 계획 확정: 스토리나침반, 저장 B안(폴더/ZIP), Scene=Note, Cursor 하네스 루프
+- 계획 확정: 스토리나침반, 저장 B안(폴더/ZIP), Scene=Note, Cursor 하네스 루프
 - 하네스 문서 작성: 요구사항·데이터모델·15비트·구현계획·AGENT_GUIDE·작업기록·rules
 - Vite+React+TS+RTK 골격 및 TipTap·Folder/ZIP storage 추가
 - Phase1: 문서 트리·씬 CRUD·제목 검증·디바운스 자동저장

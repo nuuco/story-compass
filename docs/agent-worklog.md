@@ -1,6 +1,6 @@
 # 에이전트 작업 기록
 
-과제 7 Walkthrough · Review changes 대체 기록.  
+에이전트 Walkthrough · Review changes 대체 기록.  
 **사용자 프롬프트 요지:** [docs/prompt-log.md](./prompt-log.md)
 
 > 이력 표기 참고: 초기 `BeatNav`는 이후 `RouteNav`로 개명. 에디터는 TipTap → Toast UI.
@@ -9,7 +9,7 @@
 
 ### 2026-07-27 — Task 0.1 하네스 문서
 
-- 목적: 제출용 문서 번들
+- 목적: 초기 하네스 문서 번들
 - 변경 파일: `docs/*`, `AGENT_GUIDE.md`, `AGENTS.md`, `.cursor/rules/story-compass.mdc`
 - 판정: 채택
 - 다음: Vite 골격
@@ -50,7 +50,7 @@
 
 ### 사람이 최종 판단한 문장
 
-스토리나침반은 과제 운영 필수(Scene=Note)와 RTK·TS·로컬 파일 저장을 충족하며, PRD의 Drive는 후순위로 문서화했다.
+스토리나침반은 Scene(=Note) CRUD와 RTK·TS·로컬 파일 저장을 충족하며, PRD의 Drive는 후순위로 문서화했다.
 
 ### 2026-07-27 — UI 리디자인
 
@@ -338,10 +338,4 @@
 - 목적: typecheck/build·빈 원고 내보내기·문서 검증 시나리오 정리
 - 변경: `sceneHasManuscriptContent` 가드, 미사용 `safeFilename` 제거, SRS §6 시나리오·TRD/AGENTS
 - 명령: typecheck·build 통과
-- 판정: 채택
-
-### 2026-08-02 — sample-workspace 3막 씬 보강
-
-- 목적: 「밤기차의 손님」 샘플이 중간점~전부최악에서 끊기지 않도록 뒷부분 채움
-- 변경: beat 12~15(암흑·3막 진입·피날레·파이널) 씬 4개 추가, doc_main updatedAt
 - 판정: 채택

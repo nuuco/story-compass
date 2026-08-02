@@ -4,7 +4,6 @@
 
 - 이름: Story Compass (스토리 나침반)
 - 스택: React + TypeScript + Vite + Redux Toolkit + Toast UI Editor + `@dnd-kit` + Tailwind CSS v4
-- 과제: AI SW 장기교육 과제 7 (Cursor 대체 경로)
 
 ## 작업 원칙 (하네스·루프)
 
@@ -26,11 +25,11 @@
 - LocalStorage에 **노트 원본** 저장 (UI 선호 `sidebarCollapsed` 등은 예외)
 - `useState`만으로 씬/문서 원본 전체 관리
 - force push, 대량 삭제, 프로젝트 전체 덮어쓰기
-- 과제 제외: 인증 서버, 협업, 자동 배포
+- 범위 밖: 인증 서버, 협업, 자동 배포
 
 ## 도메인 규칙
 
-- Scene = 과제 Note
+- Scene = Note
 - 제목·본문 각각 빈값 허용. 제목 공백 시 빨간 안내만(저장 차단 아님). 리스트 카드는 제목 행 없이 본문만, 모달 제목 칸 유지. 제목·본문 모두 비면 모달 닫을 때 생성 취소
 - 자동 저장 시 에디터 remount 금지 (Ctrl+Z 유지)
 - 저장: 워크스페이스 폴더(File System Access, Chromium 권장). ZIP 미지원
