@@ -101,3 +101,4 @@
 - 리팩터: dead code 제거(ui/tags/moveSceneBeat), WorkspaceDndProvider 파일명, BEAT_COUNT 클램프
 - 리팩터: selectors·noteConvert 분리, troubleshooting §8·§9
 - sample-workspace: 다중 프로젝트·README, 열 때 projects/ 편입·루트 레거시 정리(§10)
+- 워크스페이스 폴더 드래그앤드롭 연결 (FolderConnectPrompt + connectWorkspaceFromHandle)

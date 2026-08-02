@@ -253,3 +253,8 @@
 
 - **요청:** MyProject가 비어 보이던 원인(워크스페이스 스키마)에 맞춰 sample-workspace 정리, 연결해 보게
 - **대응:** 샘플 다중 프로젝트·README, `reconcileProjectsFromDisk`·루트 레거시 잔여 이동, troubleshooting §10
+
+### 2026-08-02 — 워크스페이스 폴더 드래그앤드롭
+
+- **요청:** 워크스페이스 폴더를 화면에 드롭해 연결, 가능함이 보이는 UI·드롭 중 피드백
+- **대응:** `connectWorkspaceFromHandle`, FolderConnectPrompt 드롭존/오버레이, 토스트·문서 안내

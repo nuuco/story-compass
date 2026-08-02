@@ -298,9 +298,11 @@ rm -rf node_modules/.vite && npm run dev
 ### 체험용 샘플
 
 레포의 `sample-workspace/` 는 위 형식의 정상 예시이다.  
-**`sample-workspace` 루트**를 선택해 연다 (`projects` 하위가 아님).
+**`sample-workspace` 루트**를 「기존 워크스페이스 열기」로 선택하거나, 연결 안내 화면에 **폴더를 드래그앤드롭**해도 된다.
 
 ### 관련 파일
 
 - `src/storage/workspaceStorage.ts` (`reconcileProjectsFromDisk`, `migrateLeftoverLegacyRoot`)
+- `src/storage/projectConnection.ts` (`connectWorkspaceFromHandle`)
+- `src/components/FolderConnectPrompt.tsx`
 - `sample-workspace/README.md`

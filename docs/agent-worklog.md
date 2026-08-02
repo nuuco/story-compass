@@ -301,6 +301,12 @@
 - 변경: 샘플에 「짧은 스케치」 추가·`sample-workspace/README.md`, `reconcileProjectsFromDisk`·루트 레거시 잔여 이동, troubleshooting §10
 - 판정: 채택
 
+### 2026-08-02 — 워크스페이스 폴더 드래그앤드롭 연결
+
+- 목적: 미연결 화면에서 폴더 드롭으로 워크스페이스 열기
+- 변경: `connectWorkspaceFromHandle`, FolderConnectPrompt 드롭존·오버레이 UI, README/AGENTS
+- 판정: 채택
+
 ### 2026-08-02 — 전역 리팩터링 (버그·중복·dead code)
 
 - 목적: 자동저장 레이스·필터×DnD·중복 UI·미사용 코드·selector 정리

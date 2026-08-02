@@ -47,6 +47,7 @@ npm run build
 | 컴포넌트 | 역할 |
 |---|---|
 | `ExplorerSidebar` | 워크스페이스·프로젝트 트리·휴지통·폴더 연결 (CTA: 새 워크스페이스 / 기존 워크스페이스 열기) |
+| `FolderConnectPrompt` | 미연결 안내·CTA·**폴더 드래그앤드롭** 존 (`getAsFileSystemHandle`) |
 | `TrashPanel` | 휴지통 목록(본문 미리보기)·정렬·복원·영구삭제·비우기 |
 | `Toast` | 복사·저장 등 짧은 피드백 — `.app-toast` 진한 알약형(불투명·`--shadow-md`) |
 | `RouteNav` | 제목·프로그레스·1·2·3막·마커 |
@@ -140,6 +141,7 @@ interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, upd
 | `FolderStorage` | `projects/{id}/` JSON 트리 + 프로젝트 trash |
 | `handleStore` | **워크스페이스 폴더 핸들만** IndexedDB 영속화 |
 | `restoreFolderConnection` | 앱 시작 시 핸들·권한·스냅샷 복원 |
+| `connectWorkspace` / `connectWorkspaceFromHandle` | 피커·드롭 공통 워크스페이스 연결 |
 | `autosave` | dirty 시 500ms 디바운스 `saveAll` |
 | prune | 활성·trash 각각 keepIds 기준 orphan JSON 삭제 |
 | `exportText` | 씬/참고/문서 평문 변환·클립보드·`.txt` 다운로드 |

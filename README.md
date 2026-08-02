@@ -36,8 +36,8 @@ npm run build
 저장소에 포함된 [`sample-workspace/`](sample-workspace/)를 열면 샘플 스토리로 바로 둘러볼 수 있습니다.
 
 1. `npm run dev` 후 Chrome/Edge에서 앱 열기
-2. **기존 워크스페이스 열기**
-3. 클론한 레포의 **`sample-workspace` 폴더 자체**를 선택  
+2. **기존 워크스페이스 열기**로 선택하거나, 연결 안내 화면에 **폴더를 끌어다 놓기**
+3. 클론한 레포의 **`sample-workspace` 폴더 자체**를 선택·드롭  
    (`projects` 안이 아니라 `workspace.json`이 있는 루트)
 
 포함 프로젝트: 「밤기차의 손님」(본편)·「짧은 스케치」(전환 체험).  
