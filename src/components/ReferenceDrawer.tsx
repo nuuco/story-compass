@@ -1,12 +1,19 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useMemo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  selectFocusBeatIndex,
+  selectReferenceDrawerOpen,
+  selectReferenceSearchQuery,
+  selectReferenceTagFilter,
+  selectReferences,
+  selectSelectedDocumentId,
+  selectSelectedReferenceId,
+} from '../store/selectors';
 import {
   addReference,
   copyReferenceToScene,
@@ -20,11 +27,11 @@ import {
 } from '../store/projectSlice';
 import type { ReferenceNote } from '../types/models';
 import { matchesNoteSearch } from '../utils/content';
+import { REF_TRAY_ID } from '../utils/dndIds';
 import { TagFilter } from './TagFilter';
 import { SearchInput } from './SearchInput';
 import { ReferenceKeepModal } from './ReferenceKeepModal';
-import { copyTextToClipboard, formatNotePlain } from '../utils/exportText';
-import { NoteMenuPortal } from './NoteMenuPortal';
+import { NotePreviewCard } from './NotePreviewCard';
 import { useConfirm } from './ConfirmDialog';
 import { useToast } from './Toast';
 
@@ -53,145 +60,35 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
   const { showToast } = useToast();
-  const focusBeatIndex = useAppSelector((s) => s.project.focusBeatIndex);
-  const selectedDocumentId = useAppSelector((s) => s.project.selectedDocumentId);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuBtnRef = useRef<HTMLButtonElement>(null);
-  const suppressClickRef = useRef(false);
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: refNote.id,
-    data: { type: 'reference', refId: refNote.id },
-  });
-
-  useEffect(() => {
-    if (isDragging) {
-      suppressClickRef.current = true;
-      return;
-    }
-    if (!suppressClickRef.current) return;
-    const t = window.setTimeout(() => {
-      suppressClickRef.current = false;
-    }, 80);
-    return () => window.clearTimeout(t);
-  }, [isDragging]);
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const title = refNote.title.trim();
-  const previewHtml =
-    refNote.contentHtml?.trim() &&
-    refNote.contentHtml !== '<p></p>' &&
-    refNote.contentHtml !== '<p><br></p>'
-      ? refNote.contentHtml
-      : '';
-  const plainExcerpt = previewHtml
-    ? previewHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-    : '';
-
-  async function onCopyText() {
-    const text = formatNotePlain(refNote);
-    const ok = await copyTextToClipboard(text);
-    showToast(
-      ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
-      ok ? 'info' : 'error',
-    );
-  }
-
-  async function onDelete() {
-    const ok = await confirm({
-      title: '참고 메모를 삭제할까요?',
-      message: '삭제한 메모는 휴지통으로 이동합니다. 나중에 복원할 수 있습니다.',
-      confirmLabel: '휴지통으로',
-      danger: true,
-    });
-    if (ok) dispatch(deleteReference(refNote.id));
-  }
+  const focusBeatIndex = useAppSelector(selectFocusBeatIndex);
+  const selectedDocumentId = useAppSelector(selectSelectedDocumentId);
 
   return (
-    <article
-      ref={setNodeRef}
-      style={style}
-      data-ref-card
-      className={`scene-card ref-preview-card ${isDragging ? 'dragging' : ''} ${menuOpen ? 'menu-open' : ''}`}
-      {...attributes}
-      {...listeners}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (suppressClickRef.current) {
-          suppressClickRef.current = false;
-          return;
-        }
-        dispatch(selectReference(refNote.id));
+    <NotePreviewCard
+      id={refNote.id}
+      title={refNote.title}
+      contentHtml={refNote.contentHtml}
+      tags={refNote.tags}
+      dndType="reference"
+      className="ref-preview-card"
+      onSelect={() => dispatch(selectReference(refNote.id))}
+      onDelete={async () => {
+        const ok = await confirm({
+          title: '참고 메모를 삭제할까요?',
+          message:
+            '삭제한 메모는 휴지통으로 이동합니다. 나중에 복원할 수 있습니다.',
+          confirmLabel: '휴지통으로',
+          danger: true,
+        });
+        if (ok) dispatch(deleteReference(refNote.id));
       }}
-    >
-      <div
-        className="card-options card-options--bar"
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          className="icon-btn icon-btn--danger"
-          aria-label="삭제"
-          title="삭제"
-          onClick={(e) => {
-            e.stopPropagation();
-            void onDelete();
-          }}
-        >
-          <span className="material-symbols-rounded" style={{ fontSize: 18 }}>
-            delete
-          </span>
-        </button>
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label="텍스트로 복사"
-          title="텍스트로 복사"
-          onClick={(e) => {
-            e.stopPropagation();
-            void onCopyText();
-          }}
-        >
-          <span className="material-symbols-rounded" style={{ fontSize: 18 }}>
-            content_copy
-          </span>
-        </button>
-        <button
-          ref={menuBtnRef}
-          type="button"
-          className="icon-btn"
-          aria-label="더보기"
-          aria-expanded={menuOpen}
-          title="더보기"
-          onClick={(e) => {
-            e.stopPropagation();
-            setMenuOpen((o) => !o);
-          }}
-        >
-          <span className="material-symbols-rounded" style={{ fontSize: 18 }}>
-            more_horiz
-          </span>
-        </button>
-        <NoteMenuPortal
-          open={menuOpen}
-          anchorRef={menuBtnRef}
-          onClose={() => setMenuOpen(false)}
-        >
+      renderMenu={(closeMenu) => (
+        <>
           <button
             type="button"
             onClick={() => {
               dispatch(nudgeReference({ id: refNote.id, dir: 'top' }));
-              setMenuOpen(false);
+              closeMenu();
             }}
           >
             맨 위로
@@ -200,7 +97,7 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
             type="button"
             onClick={() => {
               dispatch(nudgeReference({ id: refNote.id, dir: 'bottom' }));
-              setMenuOpen(false);
+              closeMenu();
             }}
           >
             맨 아래로
@@ -211,7 +108,7 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
             onClick={() => {
               if (!selectedDocumentId) {
                 showToast('문서를 먼저 선택하세요', 'error');
-                setMenuOpen(false);
+                closeMenu();
                 return;
               }
               dispatch(
@@ -220,47 +117,21 @@ function ReferencePreviewCard({ refNote }: { refNote: ReferenceNote }) {
                   beatIndex: focusBeatIndex ?? 0,
                 }),
               );
-              setMenuOpen(false);
+              closeMenu();
               showToast('칸반으로 복사했습니다');
             }}
           >
             칸반으로 복사
           </button>
           <p className="note-menu__hint">이동은 칸반으로 드래그</p>
-        </NoteMenuPortal>
-      </div>
-
-      {title ? <div className="card-title">{title}</div> : null}
-
-      {plainExcerpt ? (
-        <div
-          className={`card-excerpt ${title ? '' : 'card-excerpt--solo'}`.trim()}
-        >
-          {plainExcerpt}
-        </div>
-      ) : (
-        <div
-          className={`card-excerpt empty ${title ? '' : 'card-excerpt--solo'}`.trim()}
-        >
-          내용 없음
-        </div>
+        </>
       )}
-
-      {refNote.tags.length > 0 && (
-        <div className="card-tags">
-          {refNote.tags.map((t) => (
-            <span key={t} className="tag-chip">
-              #{t.replace(/^#/, '')}
-            </span>
-          ))}
-        </div>
-      )}
-    </article>
+    />
   );
 }
 
 function RefTray({ children }: { children: React.ReactNode }) {
-  const { setNodeRef, isOver } = useDroppable({ id: 'ref-tray' });
+  const { setNodeRef, isOver } = useDroppable({ id: REF_TRAY_ID });
   return (
     <div
       ref={setNodeRef}
@@ -274,13 +145,11 @@ function RefTray({ children }: { children: React.ReactNode }) {
 export function ReferenceDrawer() {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
-  const {
-    references,
-    referenceDrawerOpen,
-    referenceTagFilter,
-    referenceSearchQuery,
-    selectedReferenceId,
-  } = useAppSelector((s) => s.project);
+  const references = useAppSelector(selectReferences);
+  const referenceDrawerOpen = useAppSelector(selectReferenceDrawerOpen);
+  const referenceTagFilter = useAppSelector(selectReferenceTagFilter);
+  const referenceSearchQuery = useAppSelector(selectReferenceSearchQuery);
+  const selectedReferenceId = useAppSelector(selectSelectedReferenceId);
 
   const selectedTags = referenceTagFilter
     .map((t) => t.replace(/^#/, '').trim())
@@ -314,7 +183,7 @@ export function ReferenceDrawer() {
   }, [references]);
 
   const editing = selectedReferenceId
-    ? references.find((r) => r.id === selectedReferenceId) ?? null
+    ? (references.find((r) => r.id === selectedReferenceId) ?? null)
     : null;
 
   const emptyMessage =

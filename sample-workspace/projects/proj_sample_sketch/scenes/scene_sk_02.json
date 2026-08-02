@@ -1,0 +1,13 @@
+{
+  "id": "scene_sk_02",
+  "documentId": "doc_sketch",
+  "title": "전화 벨",
+  "contentHtml": "<p>가방 속에서 전화가 울린다. 모르는 번호. 받지 않는다. (촉매 비트에 두기 좋은 한 줄)</p>",
+  "beatIndex": 3,
+  "order": 0,
+  "tags": [
+    "스케치"
+  ],
+  "createdAt": "2026-07-15T09:20:00.000Z",
+  "updatedAt": "2026-07-20T11:00:00.000Z"
+}

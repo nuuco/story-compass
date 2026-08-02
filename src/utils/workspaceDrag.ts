@@ -7,6 +7,11 @@ import {
   placeScene,
 } from '../store/projectSlice';
 import type { ReferenceNote, Scene } from '../types/models';
+import {
+  isBeatDroppableId,
+  parseBeatDroppableId,
+  REF_TRAY_ID,
+} from './dndIds';
 
 type ToastFn = (message: string, tone?: 'info' | 'error') => void;
 
@@ -18,6 +23,10 @@ export function handleWorkspaceDragEnd(
     references: ReferenceNote[];
     selectedDocumentId: string | null;
     showToast: ToastFn;
+    /** 칸반 검색·태그 필터 활성 시 씬 순서 변경 차단 */
+    sceneFilterActive: boolean;
+    /** 참고 검색·태그 필터 활성 시 참고 순서 변경 차단 */
+    referenceFilterActive: boolean;
   },
 ): void {
   const { active, over } = event;
@@ -26,16 +35,28 @@ export function handleWorkspaceDragEnd(
   const activeId = String(active.id);
   const overId = String(over.id);
   const type = active.data.current?.type as string | undefined;
-  const { dispatch, scenes, references, selectedDocumentId, showToast } = ctx;
+  const {
+    dispatch,
+    scenes,
+    references,
+    selectedDocumentId,
+    showToast,
+    sceneFilterActive,
+    referenceFilterActive,
+  } = ctx;
+
+  const sceneIds = new Set(scenes.map((s) => s.id));
+  const refIds = new Set(references.map((r) => r.id));
 
   // 참고 → 칸반 (이동)
-  if (type === 'reference' || references.some((r) => r.id === activeId)) {
-    if (overId.startsWith('beat-')) {
+  if (type === 'reference' || refIds.has(activeId)) {
+    const beatIndex = parseBeatDroppableId(overId);
+    if (beatIndex !== null) {
       if (!selectedDocumentId) {
         showToast('문서를 먼저 선택하세요', 'error');
         return;
       }
-      const beatIndex = Number(overId.replace('beat-', ''));
+      if (!references.some((r) => r.id === activeId)) return;
       dispatch(convertReferenceToScene({ refId: activeId, beatIndex }));
       showToast('씬으로 옮겼습니다');
       return;
@@ -46,6 +67,7 @@ export function handleWorkspaceDragEnd(
         showToast('문서를 먼저 선택하세요', 'error');
         return;
       }
+      if (!references.some((r) => r.id === activeId)) return;
       dispatch(
         convertReferenceToScene({
           refId: activeId,
@@ -57,7 +79,11 @@ export function handleWorkspaceDragEnd(
       return;
     }
     // 참고 목록 내 재정렬
-    if (references.some((r) => r.id === overId) && activeId !== overId) {
+    if (refIds.has(overId) && activeId !== overId) {
+      if (referenceFilterActive) {
+        showToast('검색·필터를 끄면 순서를 바꿀 수 있습니다', 'error');
+        return;
+      }
       const sorted = [...references].sort((a, b) => a.order - b.order);
       const to = sorted.findIndex((r) => r.id === overId);
       if (to >= 0) dispatch(placeReference({ id: activeId, order: to }));
@@ -66,10 +92,11 @@ export function handleWorkspaceDragEnd(
   }
 
   // 씬 → 참고 드로어 (이동)
-  if (type === 'scene' || scenes.some((s) => s.id === activeId)) {
-    if (overId === 'ref-tray' || references.some((r) => r.id === overId)) {
+  if (type === 'scene' || sceneIds.has(activeId)) {
+    if (overId === REF_TRAY_ID || refIds.has(overId)) {
+      if (!scenes.some((s) => s.id === activeId)) return;
       let order: number | undefined;
-      if (overId !== 'ref-tray') {
+      if (overId !== REF_TRAY_ID) {
         const sorted = [...references].sort((a, b) => a.order - b.order);
         const to = sorted.findIndex((r) => r.id === overId);
         if (to >= 0) order = to;
@@ -85,11 +112,17 @@ export function handleWorkspaceDragEnd(
     const moving = scenes.find((s) => s.id === activeId);
     if (!moving) return;
 
+    // 칸반 내 비트·순서 변경
+    if (sceneFilterActive) {
+      showToast('검색·필터를 끄면 순서를 바꿀 수 있습니다', 'error');
+      return;
+    }
+
     let targetBeat = moving.beatIndex;
     let targetOrder = moving.order;
 
-    if (overId.startsWith('beat-')) {
-      targetBeat = Number(overId.replace('beat-', ''));
+    if (isBeatDroppableId(overId)) {
+      targetBeat = parseBeatDroppableId(overId)!;
       targetOrder = scenes.filter(
         (s) =>
           s.documentId === selectedDocumentId &&

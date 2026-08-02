@@ -33,13 +33,15 @@ npm run build
 
 ## 샘플 체험
 
-저장소에 포함된 [`sample-workspace/`](sample-workspace/)를 열면 샘플 스토리(밤기차의 손님)로 바로 둘러볼 수 있습니다.
+저장소에 포함된 [`sample-workspace/`](sample-workspace/)를 열면 샘플 스토리로 바로 둘러볼 수 있습니다.
 
 1. `npm run dev` 후 Chrome/Edge에서 앱 열기
 2. **기존 워크스페이스 열기**
-3. 클론한 프로젝트 안의 `sample-workspace` 폴더 선택
+3. 클론한 레포의 **`sample-workspace` 폴더 자체**를 선택  
+   (`projects` 안이 아니라 `workspace.json`이 있는 루트)
 
-브라우저 보안상 폴더를 자동으로 열 수는 없고, 위처럼 한 번 선택해 주면 됩니다.
+포함 프로젝트: 「밤기차의 손님」(본편)·「짧은 스케치」(전환 체험).  
+자세한 트리 설명은 [`sample-workspace/README.md`](sample-workspace/README.md).
 
 ## 폴더 구조 (워크스페이스)
 

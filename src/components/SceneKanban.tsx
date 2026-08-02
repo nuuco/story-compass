@@ -17,6 +17,15 @@ import { DEFAULT_BEAT_GUIDE, getActGuide, getBeatAct } from '../data/beatGuide';
 import type { BeatGuideItem } from '../types/models';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
+  selectCenterSearchQuery,
+  selectCenterTagFilter,
+  selectDocuments,
+  selectFocusBeatIndex,
+  selectScenes,
+  selectSelectedDocumentId,
+  selectSelectedSceneId,
+} from '../store/selectors';
+import {
   addScene,
   purgeSceneTag,
   selectScene,
@@ -26,6 +35,7 @@ import {
 } from '../store/projectSlice';
 import type { Scene } from '../types/models';
 import { matchesNoteSearch } from '../utils/content';
+import { beatDroppableId } from '../utils/dndIds';
 import {
   copyTextToClipboard,
   downloadTextFile,
@@ -156,7 +166,9 @@ function BeatColumn({
   actStart?: boolean;
 }) {
   const dispatch = useAppDispatch();
-  const { setNodeRef, isOver } = useDroppable({ id: `beat-${beatIndex}` });
+  const { setNodeRef, isOver } = useDroppable({
+    id: beatDroppableId(beatIndex),
+  });
   const ids = scenes.map((s) => s.id);
   const beatGuide = DEFAULT_BEAT_GUIDE[beatIndex];
   const headerRef = useRef<HTMLDivElement>(null);
@@ -250,15 +262,13 @@ export function SceneKanban() {
   const dispatch = useAppDispatch();
   const confirm = useConfirm();
   const { showToast } = useToast();
-  const {
-    scenes,
-    selectedDocumentId,
-    selectedSceneId,
-    centerTagFilter,
-    centerSearchQuery,
-    focusBeatIndex,
-    documents,
-  } = useAppSelector((s) => s.project);
+  const scenes = useAppSelector(selectScenes);
+  const selectedDocumentId = useAppSelector(selectSelectedDocumentId);
+  const selectedSceneId = useAppSelector(selectSelectedSceneId);
+  const centerTagFilter = useAppSelector(selectCenterTagFilter);
+  const centerSearchQuery = useAppSelector(selectCenterSearchQuery);
+  const focusBeatIndex = useAppSelector(selectFocusBeatIndex);
+  const documents = useAppSelector(selectDocuments);
   const [guideBeatIndex, setGuideBeatIndex] = useState<number | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const focusBeatRef = useRef(focusBeatIndex);
@@ -436,6 +446,18 @@ export function SceneKanban() {
 
   const selectedDoc = documents.find((d) => d.id === selectedDocumentId);
 
+  function documentPlainText() {
+    const docScenes = scenes.filter((s) => s.documentId === selectedDocumentId);
+    return {
+      docScenes,
+      text: formatDocumentPlain({
+        documentTitle: selectedDoc?.title ?? '문서',
+        scenes: docScenes,
+        beatNames: DEFAULT_BEAT_GUIDE.map((b) => b.nameKo),
+      }),
+    };
+  }
+
   if (!selectedDocumentId) {
     return (
       <main className="canvas">
@@ -466,18 +488,11 @@ export function SceneKanban() {
               aria-label="문서 원고를 클립보드에 복사"
               onClick={() => {
                 void (async () => {
-                  const docScenes = scenes.filter(
-                    (s) => s.documentId === selectedDocumentId,
-                  );
+                  const { docScenes, text } = documentPlainText();
                   if (docScenes.length === 0) {
                     showToast('복사할 씬이 없습니다', 'error');
                     return;
                   }
-                  const text = formatDocumentPlain({
-                    documentTitle: selectedDoc?.title ?? '문서',
-                    scenes: docScenes,
-                    beatNames: DEFAULT_BEAT_GUIDE.map((b) => b.nameKo),
-                  });
                   const ok = await copyTextToClipboard(text);
                   showToast(
                     ok ? '클립보드에 복사했습니다' : '복사에 실패했습니다',
@@ -495,18 +510,11 @@ export function SceneKanban() {
               title="텍스트 파일로 저장"
               aria-label="문서 원고를 텍스트 파일로 저장"
               onClick={() => {
-                const docScenes = scenes.filter(
-                  (s) => s.documentId === selectedDocumentId,
-                );
+                const { docScenes, text } = documentPlainText();
                 if (docScenes.length === 0) {
                   showToast('저장할 씬이 없습니다', 'error');
                   return;
                 }
-                const text = formatDocumentPlain({
-                  documentTitle: selectedDoc?.title ?? '문서',
-                  scenes: docScenes,
-                  beatNames: DEFAULT_BEAT_GUIDE.map((b) => b.nameKo),
-                });
                 downloadTextFile(
                   safeFilename(selectedDoc?.title ?? '문서'),
                   text,
@@ -651,6 +659,3 @@ export function SceneKanban() {
     </main>
   );
 }
-
-/** @deprecated parseTags는 utils/tags로 이동 */
-export { parseTags } from '../utils/tags';

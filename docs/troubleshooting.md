@@ -33,7 +33,7 @@ Enter로 확정할 때도 `e.nativeEvent.isComposing`을 무시하면, 조합 �
 1. **로컬 draft + composition 가드** (`src/hooks/useImeDraft.ts`)
    - `compositionstart` ~ `compositionend` 동안은 store에 쓰지 않음
    - 조합이 끝난 뒤·영문 입력 시에만 commit
-2. 태그도 **문자열 draft**로 두고, commit 시점에만 `parseTags`
+2. 태그는 `TagChipsInput`에서 draft로 두고, 확정(Enter/스페이스) 시에만 커밋
 3. Enter 처리는 `!e.nativeEvent.isComposing`일 때만 blur
 
 ### 재현 / 확인
@@ -50,7 +50,7 @@ Enter로 확정할 때도 `e.nativeEvent.isComposing`을 무시하면, 조합 �
 - `src/components/TagChipsInput.tsx`
 - `src/components/ReferenceDrawer.tsx`
 - `src/components/ExplorerSidebar.tsx`
-- `src/utils/tags.ts` (`formatTags`)
+- 태그 입력은 `TagChipsInput`(확정 시에만 커밋). 구 `utils/tags.ts`는 제거됨
 
 ---
 
@@ -213,12 +213,94 @@ rm -rf node_modules/.vite && npm run dev
 ### 해결
 
 1. 변환(이동) 리듀서에서는 **선택 state를 세팅하지 않는다.** (원본 선택만 해제)
-2. 카드에서 `isDragging`이 true였으면 `suppressClickRef`로 직후 `click`을 무시하고, 드롭 후 짧게(약 80ms) 유지한 뒤 해제한다.
+2. 카드에서 `isDragging`이 true였으면 `useSuppressClickAfterDrag`로 직후 `click`을 무시하고, 드롭 후 짧게(약 80ms) 유지한 뒤 해제한다.
 
 메뉴의 「참고 메모로 이동」도 같은 convert 액션을 쓰므로, 이동만 하고 모달은 열지 않는 동작이 된다. 편집이 필요하면 카드를 다시 클릭한다.
 
 ### 관련 파일
 
 - `src/store/projectSlice.ts` (`convertReferenceToScene`, `convertSceneToReference`)
-- `src/components/SceneCard.tsx` / `ReferenceDrawer.tsx` (`suppressClickRef`)
+- `src/hooks/useSuppressClickAfterDrag.ts` / `src/components/NotePreviewCard.tsx`
 - `src/utils/workspaceDrag.ts`
+
+---
+
+## 8. 자동저장 직후 추가 편집이 디스크에 안 남는 것처럼
+
+### 증상
+
+저장 배지가 `저장됨`으로 바뀐 직후에도, 저장이 돌던 중에 친 글자가 폴더 JSON에 반영되지 않을 수 있다.
+
+### 원인
+
+`scheduleSave` 콜백이 **스케줄 시점의 스냅샷**을 닫아 두고, 완료 시 무조건 `setSaveStatus('saved')`를 호출했다.  
+저장 `await` 중에 편집이 있으면 `dirty`로 바뀌어도, 이전 저장 완료 콜백이 `saved`로 덮어썼다.
+
+### 해결
+
+1. 저장 직전·직후 모두 `store.getState()`로 최신 프로젝트 스냅샷을 읽는다.
+2. 완료 시 `saveStatus === 'saving'`일 때만 `saved`로 바꾼다. 이미 `dirty`면 건드리지 않고 재저장을 요청한다.
+3. `autosave`에 저장 잠금 + `saveAgain` 큐로 동시 저장을 직렬화한다.
+4. `visibilitychange`/`beforeunload` flush 리스너는 마운트 시 1회만 등록한다.
+
+### 관련 파일
+
+- `src/App.tsx` (`useAutosave`)
+- `src/storage/autosave.ts`
+
+---
+
+## 9. 검색·태그 필터 중 드래그하면 순서가 어긋남
+
+### 증상
+
+칸반/참고에서 검색·태그로 **일부만 보이는 상태**에서 카드를 드래그하면, 숨겨진 항목과 순서가 뒤섞이거나 예상과 다른 위치에 떨어진다.
+
+### 원인
+
+`SortableContext`에는 **필터된 목록**만 넣고, `placeScene`/`placeReference`는 **전체 siblings** 기준으로 order를 계산했다.
+
+### 해결
+
+필터 활성 시 해당 영역의 **순서 변경(place)** 만 막고 토스트로 안내한다.  
+참고↔칸반 **이동·변환** 드래그는 그대로 허용한다. (`useSortable`을 disabled 하면 변환 드래그까지 막히므로 핸들러에서만 차단)
+
+### 관련 파일
+
+- `src/utils/workspaceDrag.ts`
+- `src/components/WorkspaceDndProvider.tsx`
+- `src/store/selectors.ts` (`selectSceneFilterActive` 등)
+
+---
+
+## 10. 기존 폴더를 열었는데 문서·프로젝트가 비어 보임
+
+### 증상
+
+예전에 쓰던 폴더를 「기존 워크스페이스 열기」로 연결했는데, 사이드바에 빈 「새 스토리」만 보이거나 문서가 없다.  
+디스크에는 `projects/다른id/` 에 씬·문서 JSON이 남아 있다.
+
+### 원인
+
+1. 저장 형식이 **단일 프로젝트 루트** → **워크스페이스(`workspace.json` + `projects/{id}/`)** 로 바뀜
+2. `workspace.json`만 먼저 생기고, 실제 데이터가 있는 프로젝트 폴더가 **목록에 등록되지 않은** 반쯤 마이그레이션 상태
+3. 예전에는 `workspace.json`이 있으면 디스크 스캔/루트 잔여 마이그레이션을 하지 않았다
+
+### 해결 (앱)
+
+폴더를 열 때 `ensureWorkspaceLayout`이:
+
+1. `projects/`를 스캔해 목록에 없는 프로젝트를 `workspace.json`에 편입
+2. 루트에 남은 `manifest.json`·`documents/` 등 레거시를 `projects/{id}/`로 이동 (워크스페이스 `trash/projects`는 유지)
+
+그래도 활성이 빈 프로젝트면 사이드바에서 다른 프로젝트로 전환하면 된다.
+
+### 체험용 샘플
+
+레포의 `sample-workspace/` 는 위 형식의 정상 예시이다.  
+**`sample-workspace` 루트**를 선택해 연다 (`projects` 하위가 아님).
+
+### 관련 파일
+
+- `src/storage/workspaceStorage.ts` (`reconcileProjectsFromDisk`, `migrateLeftoverLegacyRoot`)
+- `sample-workspace/README.md`

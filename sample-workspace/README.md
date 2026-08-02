@@ -1,0 +1,35 @@
+# sample-workspace
+
+스토리 나침반 **체험용 워크스페이스**입니다.  
+앱의 「기존 워크스페이스 열기」로 **이 폴더 자체**를 선택하세요.  
+(`projects` 하위가 아니라 `sample-workspace` 루트)
+
+## 폴더 형식 (현재 스키마)
+
+```text
+sample-workspace/          ← 여기를 연결
+  workspace.json           ← 프로젝트 목록·활성 id
+  projects/
+    proj_sample_nighttrain/   # 본편 샘플 「밤기차의 손님」
+      manifest.json
+      documents/
+      scenes/
+      references/
+      trash/                  # 프로젝트 휴지통
+      assets/ · beats/
+    proj_sample_sketch/       # 짧은 두 번째 프로젝트
+  trash/
+    projects/                 # 삭제된 프로젝트용 (비어 있음)
+```
+
+루트에 `manifest.json`이 있으면 **예전 단일 프로젝트** 형식입니다.  
+지금 앱은 루트 `workspace.json` + `projects/{id}/` 를 씁니다.
+
+## 여는 방법
+
+1. `npm run dev` 후 Chrome/Edge
+2. **기존 워크스페이스 열기**
+3. 이 `sample-workspace` 디렉터리 선택
+4. 사이드바에서 「밤기차의 손님」·「짧은 스케치」 전환
+
+브라우저 보안상 경로를 자동으로 열 수는 없습니다.

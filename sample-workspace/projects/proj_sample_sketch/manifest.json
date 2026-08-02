@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "project": {
+    "id": "proj_sample_sketch",
+    "title": "짧은 스케치",
+    "createdAt": "2026-07-15T09:00:00.000Z",
+    "updatedAt": "2026-07-20T11:00:00.000Z"
+  },
+  "activeDocumentId": "doc_sketch"
+}

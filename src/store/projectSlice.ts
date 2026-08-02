@@ -12,18 +12,19 @@ import type {
 import { emptyProjectTrash, SCHEMA_VERSION } from '../types/models';
 import { createId, nowIso } from '../utils/id';
 import { isEmptyNote } from '../utils/content';
-import { createEmptyProjectSnapshot as createEmptySnap } from '../storage/createEmpty';
-import type { ProjectSnapshot } from '../storage/types';
 import type { TrashSortBy } from '../utils/trash';
+import { clampBeatIndex } from './beatIndex';
+import {
+  buildReferenceFromScene,
+  buildSceneFromReference,
+  reserveReferenceOrder,
+  reserveSceneOrder,
+} from './noteConvert';
 
 export interface ConnectedProjectMeta {
   projectId: string;
   folderName: string;
   title: string;
-}
-
-export function createEmptyProjectSnapshot(): ProjectSnapshot {
-  return createEmptySnap();
 }
 
 const SIDEBAR_COLLAPSED_KEY = 'story-compass-sidebar-collapsed';
@@ -267,17 +268,12 @@ const projectSlice = createSlice({
     ) {
       const { documentId, beatIndex = 0, order: insertOrder } = action.payload;
       const ts = nowIso();
-      const bi = Math.min(14, Math.max(0, beatIndex));
-      const siblings = state.scenes.filter(
-        (s) => s.documentId === documentId && s.beatIndex === bi,
+      const { beatIndex: bi, order } = reserveSceneOrder(
+        state,
+        documentId,
+        beatIndex,
+        insertOrder,
       );
-      let order = siblings.length;
-      if (insertOrder !== undefined) {
-        order = Math.min(siblings.length, Math.max(0, Math.floor(insertOrder)));
-        for (const s of siblings) {
-          if (s.order >= order) s.order += 1;
-        }
-      }
       const scene: Scene = {
         id: createId('scene'),
         documentId,
@@ -310,7 +306,7 @@ const projectSlice = createSlice({
       if (title !== undefined) scene.title = title;
       if (contentHtml !== undefined) scene.contentHtml = contentHtml;
       if (beatIndex !== undefined) {
-        scene.beatIndex = Math.min(14, Math.max(0, beatIndex));
+        scene.beatIndex = clampBeatIndex(beatIndex);
       }
       if (order !== undefined) scene.order = order;
       if (tags !== undefined) scene.tags = tags;
@@ -339,28 +335,6 @@ const projectSlice = createSlice({
       }
       state.selectedSceneId = nextId;
     },
-    moveSceneBeat(
-      state,
-      action: PayloadAction<{ id: string; beatIndex: number }>,
-    ) {
-      const scene = state.scenes.find((s) => s.id === action.payload.id);
-      if (!scene) return;
-      const nextBeat = Math.min(14, Math.max(0, action.payload.beatIndex));
-      if (scene.beatIndex === nextBeat) return;
-      const oldBeat = scene.beatIndex;
-      scene.beatIndex = nextBeat;
-      const dest = state.scenes.filter(
-        (s) =>
-          s.documentId === scene.documentId &&
-          s.beatIndex === nextBeat &&
-          s.id !== scene.id,
-      );
-      scene.order = dest.length;
-      scene.updatedAt = nowIso();
-      renumberBeat(state, scene.documentId, oldBeat);
-      renumberBeat(state, scene.documentId, nextBeat);
-      markDirty(state);
-    },
     nudgeScene(
       state,
       action: PayloadAction<{
@@ -375,7 +349,7 @@ const projectSlice = createSlice({
 
       if (dir === 'left' || dir === 'right') {
         const delta = dir === 'left' ? -1 : 1;
-        const nextBeat = Math.min(14, Math.max(0, scene.beatIndex + delta));
+        const nextBeat = clampBeatIndex(scene.beatIndex + delta);
         if (nextBeat === scene.beatIndex) return;
         const oldBeat = scene.beatIndex;
         scene.beatIndex = nextBeat;
@@ -428,7 +402,7 @@ const projectSlice = createSlice({
       const scene = state.scenes.find((s) => s.id === action.payload.id);
       if (!scene) return;
       const oldBeat = scene.beatIndex;
-      const nextBeat = Math.min(14, Math.max(0, action.payload.beatIndex));
+      const nextBeat = clampBeatIndex(action.payload.beatIndex);
       const docId = scene.documentId;
 
       const others = state.scenes
@@ -582,30 +556,17 @@ const projectSlice = createSlice({
       if (state.selectedReferenceId === ref.id) state.selectedReferenceId = null;
       ensureReferenceOrders(state);
 
-      const bi = Math.min(14, Math.max(0, action.payload.beatIndex));
-      const siblings = state.scenes.filter(
-        (s) => s.documentId === docId && s.beatIndex === bi,
+      const { beatIndex: bi, order } = reserveSceneOrder(
+        state,
+        docId,
+        action.payload.beatIndex,
+        action.payload.order,
       );
-      let order = siblings.length;
-      if (action.payload.order !== undefined) {
-        order = Math.min(siblings.length, Math.max(0, Math.floor(action.payload.order)));
-        for (const s of siblings) {
-          if (s.order >= order) s.order += 1;
-        }
-      }
-      const ts = nowIso();
-      const scene: Scene = {
-        id: createId('scene'),
-        documentId: docId,
-        title: ref.title,
-        contentHtml: ref.contentHtml,
-        beatIndex: bi,
-        order,
-        tags: [...ref.tags],
-        createdAt: ref.createdAt,
-        updatedAt: ts,
-      };
-      state.scenes.push(scene);
+      state.scenes.push(
+        buildSceneFromReference(ref, docId, bi, order, {
+          preserveCreatedAt: true,
+        }),
+      );
       // 드래그 이동 직후 모달이 열리지 않도록 선택하지 않음
       markDirty(state);
     },
@@ -620,44 +581,21 @@ const projectSlice = createSlice({
       if (state.selectedSceneId === scene.id) state.selectedSceneId = null;
       renumberBeat(state, scene.documentId, scene.beatIndex);
 
-      let order = state.references.length;
-      if (action.payload.order !== undefined) {
-        order = Math.min(
-          state.references.length,
-          Math.max(0, Math.floor(action.payload.order)),
-        );
-        for (const r of state.references) {
-          if (r.order >= order) r.order += 1;
-        }
-      }
-      const ts = nowIso();
-      const ref: ReferenceNote = {
-        id: createId('ref'),
-        title: scene.title,
-        contentHtml: scene.contentHtml,
-        tags: [...scene.tags],
-        order,
-        createdAt: scene.createdAt,
-        updatedAt: ts,
-      };
-      state.references.push(ref);
+      const order = reserveReferenceOrder(state, action.payload.order);
+      state.references.push(
+        buildReferenceFromScene(scene, order, { preserveCreatedAt: true }),
+      );
       markDirty(state);
     },
     /** 씬 → 참고 복사 (원본 유지) */
     copySceneToReference(state, action: PayloadAction<{ sceneId: string }>) {
       const scene = state.scenes.find((s) => s.id === action.payload.sceneId);
       if (!scene) return;
-      const ts = nowIso();
-      const ref: ReferenceNote = {
-        id: createId('ref'),
-        title: scene.title,
-        contentHtml: scene.contentHtml,
-        tags: [...scene.tags],
-        order: state.references.length,
-        createdAt: ts,
-        updatedAt: ts,
-      };
-      state.references.push(ref);
+      state.references.push(
+        buildReferenceFromScene(scene, state.references.length, {
+          preserveCreatedAt: false,
+        }),
+      );
       markDirty(state);
     },
     /** 참고 → 씬 복사 (원본 유지) */
@@ -669,23 +607,16 @@ const projectSlice = createSlice({
       if (!docId) return;
       const ref = state.references.find((r) => r.id === action.payload.refId);
       if (!ref) return;
-      const bi = Math.min(14, Math.max(0, action.payload.beatIndex));
-      const siblings = state.scenes.filter(
-        (s) => s.documentId === docId && s.beatIndex === bi,
+      const { beatIndex: bi, order } = reserveSceneOrder(
+        state,
+        docId,
+        action.payload.beatIndex,
       );
-      const ts = nowIso();
-      const scene: Scene = {
-        id: createId('scene'),
-        documentId: docId,
-        title: ref.title,
-        contentHtml: ref.contentHtml,
-        beatIndex: bi,
-        order: siblings.length,
-        tags: [...ref.tags],
-        createdAt: ts,
-        updatedAt: ts,
-      };
-      state.scenes.push(scene);
+      state.scenes.push(
+        buildSceneFromReference(ref, docId, bi, order, {
+          preserveCreatedAt: false,
+        }),
+      );
       markDirty(state);
     },
     /** 활성 프로젝트 trash 항목 복원 (project kind는 projectConnection에서 처리) */
@@ -941,7 +872,6 @@ export const {
   updateScene,
   deleteScene,
   selectScene,
-  moveSceneBeat,
   nudgeScene,
   placeScene,
   addReference,

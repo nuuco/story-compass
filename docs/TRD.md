@@ -88,7 +88,8 @@ npm run build
   trash/projects/{projectId}/     # 삭제된 프로젝트
 ```
 
-구버전(루트 `manifest.json`)은 열 때 `projects/{id}/`로 자동 마이그레이션.
+구버전(루트 `manifest.json`)은 열 때 `projects/{id}/`로 자동 마이그레이션.  
+이미 `workspace.json`이 있어도 (1) 디스크 `projects/`에만 있는 항목을 목록에 편입하고 (2) 루트에 남은 레거시 `manifest.json`·`documents/` 등을 프로젝트로 옮긴다 (`WorkspaceStorage.ensureWorkspaceLayout`).
 
 ### 3.3 핵심 타입
 

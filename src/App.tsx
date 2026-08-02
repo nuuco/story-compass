@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from './store/hooks';
+import { store } from './store';
+import {
+  selectConnectedProjects,
+  selectReferenceDrawerOpen,
+  selectSaveStatus,
+  selectSidebarCollapsed,
+  selectStorageMode,
+  selectTrashPanelOpen,
+  selectWorkspaceFolderName,
+} from './store/selectors';
 import {
   hydrateProject,
   setActiveConnectedProjectId,
@@ -13,13 +23,14 @@ import {
   flushSave,
   getActiveStorage,
   getActiveWorkspace,
+  requestSaveAgain,
   scheduleSave,
 } from './storage/autosave';
 import { restoreFolderConnection } from './storage/restoreFolder';
 import { emptyProjectTrash } from './types/models';
 import { ExplorerSidebar } from './components/ExplorerSidebar';
 import { RouteNav } from './components/RouteNav';
-import { WorkspaceDndProvider } from './components/WorkspaceCanvas';
+import { WorkspaceDndProvider } from './components/WorkspaceDndProvider';
 import { SceneKanban } from './components/SceneKanban';
 import { ReferenceDrawer } from './components/ReferenceDrawer';
 import { FolderConnectPrompt } from './components/FolderConnectPrompt';
@@ -27,59 +38,88 @@ import { TrashPanel } from './components/TrashPanel';
 
 function useAutosave() {
   const dispatch = useAppDispatch();
-  const project = useAppSelector((s) => s.project);
+  const saveStatus = useAppSelector(selectSaveStatus);
+  const storageMode = useAppSelector(selectStorageMode);
+  // dirty일 때 콘텐츠 변경으로 이펙트를 다시 돌린다
+  const documents = useAppSelector((s) => s.project.documents);
+  const scenes = useAppSelector((s) => s.project.scenes);
+  const references = useAppSelector((s) => s.project.references);
+  const trash = useAppSelector((s) => s.project.trash);
+  const manifest = useAppSelector((s) => s.project.manifest);
 
   useEffect(() => {
-    if (project.saveStatus !== 'dirty') return;
-    if (project.storageMode !== 'folder') return;
+    if (saveStatus !== 'dirty') return;
+    if (storageMode !== 'folder') return;
 
     scheduleSave(async () => {
       const storage = getActiveStorage();
       if (!storage) return;
+
+      const before = store.getState().project;
+      if (before.storageMode !== 'folder') return;
+      if (before.saveStatus !== 'dirty' && before.saveStatus !== 'saving') {
+        return;
+      }
+
       dispatch(setSaveStatus('saving'));
+      const snap = store.getState().project;
+      const payload = {
+        manifest: snap.manifest,
+        documents: snap.documents,
+        scenes: snap.scenes,
+        references: snap.references,
+        trash: snap.trash ?? emptyProjectTrash(),
+      };
+
       try {
-        await storage.saveAll({
-          manifest: project.manifest,
-          documents: project.documents,
-          scenes: project.scenes,
-          references: project.references,
-          trash: project.trash ?? emptyProjectTrash(),
-        });
+        await storage.saveAll(payload);
         const ws = getActiveWorkspace();
         if (ws) {
-          await ws.updateProjectSummary(project.manifest.project.id, {
-            title: project.manifest.project.title,
-            updatedAt: project.manifest.project.updatedAt,
+          const m = store.getState().project.manifest.project;
+          await ws.updateProjectSummary(m.id, {
+            title: m.title,
+            updatedAt: m.updatedAt,
           });
         }
-        dispatch(setSaveStatus('saved'));
+        const after = store.getState().project;
+        if (after.saveStatus === 'dirty') {
+          // 저장 중 추가 편집 → 잠금 루프 또는 다음 dirty 이펙트
+          requestSaveAgain();
+          return;
+        }
+        if (after.saveStatus === 'saving') {
+          dispatch(setSaveStatus('saved'));
+        }
       } catch {
         dispatch(setSaveStatus('error'));
       }
     });
   }, [
-    project.saveStatus,
-    project.manifest,
-    project.documents,
-    project.scenes,
-    project.references,
-    project.trash,
-    project.storageMode,
+    saveStatus,
+    storageMode,
+    manifest,
+    documents,
+    scenes,
+    references,
+    trash,
     dispatch,
   ]);
 
+  // flush 리스너는 한 번만 — 스냅샷은 getState로
   useEffect(() => {
     const flush = () => {
+      const project = store.getState().project;
       if (project.storageMode !== 'folder') return;
       flushSave(async () => {
         const storage = getActiveStorage();
         if (!storage) return;
+        const p = store.getState().project;
         await storage.saveAll({
-          manifest: project.manifest,
-          documents: project.documents,
-          scenes: project.scenes,
-          references: project.references,
-          trash: project.trash ?? emptyProjectTrash(),
+          manifest: p.manifest,
+          documents: p.documents,
+          scenes: p.scenes,
+          references: p.references,
+          trash: p.trash ?? emptyProjectTrash(),
         });
       });
     };
@@ -89,7 +129,7 @@ function useAutosave() {
       window.removeEventListener('visibilitychange', flush);
       window.removeEventListener('beforeunload', flush);
     };
-  }, [project]);
+  }, []);
 }
 
 function useRestoreFolder() {
@@ -140,16 +180,12 @@ function useRestoreFolder() {
 export default function App() {
   const dispatch = useAppDispatch();
   const ready = useRestoreFolder();
-  const sidebarCollapsed = useAppSelector((s) => s.project.sidebarCollapsed);
-  const storageMode = useAppSelector((s) => s.project.storageMode);
-  const referenceDrawerOpen = useAppSelector(
-    (s) => s.project.referenceDrawerOpen,
-  );
-  const trashPanelOpen = useAppSelector((s) => s.project.trashPanelOpen);
-  const workspaceFolderName = useAppSelector(
-    (s) => s.project.workspaceFolderName,
-  );
-  const connectedProjects = useAppSelector((s) => s.project.connectedProjects);
+  const sidebarCollapsed = useAppSelector(selectSidebarCollapsed);
+  const storageMode = useAppSelector(selectStorageMode);
+  const referenceDrawerOpen = useAppSelector(selectReferenceDrawerOpen);
+  const trashPanelOpen = useAppSelector(selectTrashPanelOpen);
+  const workspaceFolderName = useAppSelector(selectWorkspaceFolderName);
+  const connectedProjects = useAppSelector(selectConnectedProjects);
   const folderConnected = storageMode === 'folder';
   const workspaceLinked =
     Boolean(workspaceFolderName) || connectedProjects.length > 0;

@@ -243,3 +243,13 @@
 
 - **요청:** 레포에 sample-workspace. 참고→칸반 드래그(이동), 양방향 드롭, 호버 아이콘바(삭제·복사·케밥), 케밥은 맨위/맨아래+이동/복사
 - **대응:** `sample-workspace/`, `WorkspaceDndProvider`, convert/copy 리듀서, 카드 메뉴·README 안내
+
+### 2026-08-02 — 전체 리팩터링 (보고 후 1→5 순서)
+
+- **요청:** 불필요·비효율·사이드이펙트 코드 점검 후 보고 → 전부 순서대로 수정·기록
+- **대응:** ①자동저장 dirty 레이스 ②필터×DnD 차단 ③dead code·BEAT_COUNT·파일명 ④카드/킵 모달 공통화 ⑤selectors·noteConvert, docs §8·§9
+
+### 2026-08-02 — sample-workspace 형식·연결 복구
+
+- **요청:** MyProject가 비어 보이던 원인(워크스페이스 스키마)에 맞춰 sample-workspace 정리, 연결해 보게
+- **대응:** 샘플 다중 프로젝트·README, `reconcileProjectsFromDisk`·루트 레거시 잔여 이동, troubleshooting §10

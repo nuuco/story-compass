@@ -294,3 +294,21 @@
 - 목적: 체험용 샘플 폴더 + 참고/씬 양방향 이동·복사 UX
 - 변경: `sample-workspace/`, `WorkspaceDndProvider`, convert/copy 액션, 호버 아이콘바, 케밥 축소
 - 판정: 채택
+
+### 2026-08-02 — sample-workspace 정합·폴더 복구
+
+- 목적: 체험용 워크스페이스를 현행 스키마에 맞추고, 반쯤 마이그레이션된 폴더 복구
+- 변경: 샘플에 「짧은 스케치」 추가·`sample-workspace/README.md`, `reconcileProjectsFromDisk`·루트 레거시 잔여 이동, troubleshooting §10
+- 판정: 채택
+
+### 2026-08-02 — 전역 리팩터링 (버그·중복·dead code)
+
+- 목적: 자동저장 레이스·필터×DnD·중복 UI·미사용 코드·selector 정리
+- 변경:
+  - autosave 잠금/`getState` 스냅샷/`saving`일 때만 saved
+  - 필터 활성 시 place 순서 변경 차단 + sortable disabled
+  - `NotePreviewCard`/`KeepNoteModal`/`copyNote`/`useSuppressClickAfterDrag`
+  - `ui.ts`·`tags.ts`·`moveSceneBeat` 삭제, `WorkspaceDndProvider.tsx` rename, `clampBeatIndex`/`noteConvert`/`selectors`
+  - troubleshooting §8·§9
+- 명령: `tsc --noEmit` 통과
+- 판정: 채택

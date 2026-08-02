@@ -44,13 +44,13 @@ export function TrashPanel() {
   const dispatch = useAppDispatch();
   const store = useStore<RootState>();
   const confirm = useConfirm();
-  const {
-    trash,
-    trashedProjects,
-    trashSortBy,
-    activeConnectedProjectId,
-    storageMode,
-  } = useAppSelector((s) => s.project);
+  const trash = useAppSelector((s) => s.project.trash);
+  const trashedProjects = useAppSelector((s) => s.project.trashedProjects);
+  const trashSortBy = useAppSelector((s) => s.project.trashSortBy);
+  const activeConnectedProjectId = useAppSelector(
+    (s) => s.project.activeConnectedProjectId,
+  );
+  const storageMode = useAppSelector((s) => s.project.storageMode);
 
   const items = useMemo(() => {
     const list = buildTrashListItems(

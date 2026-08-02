@@ -96,3 +96,8 @@
 - 참고 리스트 상단·칸반 툴바 하단 여백 축소
 - 칸반 툴바 드래그 안내 제거·원고 버튼 복귀, 씬 드래그 칩 문구 정리
 - UI 「비트」완화: 조작 안내는 칸반/열, 통계·가이드·내보내기는 채움/구간으로 대체
+- 리팩터: 자동저장 dirty 레이스·필터 중 DnD 순서 차단
+- 리팩터: NotePreviewCard/KeepNoteModal·copyNote·suppressClick 훅 공통화
+- 리팩터: dead code 제거(ui/tags/moveSceneBeat), WorkspaceDndProvider 파일명, BEAT_COUNT 클램프
+- 리팩터: selectors·noteConvert 분리, troubleshooting §8·§9
+- sample-workspace: 다중 프로젝트·README, 열 때 projects/ 편입·루트 레거시 정리(§10)

@@ -25,19 +25,20 @@ export function ExplorerSidebar() {
   const dispatch = useAppDispatch();
   const store = useStore<RootState>();
   const confirm = useConfirm();
-  const project = useAppSelector((s) => s.project);
-  const {
-    documents,
-    selectedDocumentId,
-    manifest,
-    sidebarCollapsed,
-    storageMode,
-    connectedProjects,
-    activeConnectedProjectId,
-    workspaceFolderName,
-    trash,
-    trashedProjects,
-  } = project;
+  const documents = useAppSelector((s) => s.project.documents);
+  const selectedDocumentId = useAppSelector((s) => s.project.selectedDocumentId);
+  const manifest = useAppSelector((s) => s.project.manifest);
+  const sidebarCollapsed = useAppSelector((s) => s.project.sidebarCollapsed);
+  const storageMode = useAppSelector((s) => s.project.storageMode);
+  const connectedProjects = useAppSelector((s) => s.project.connectedProjects);
+  const activeConnectedProjectId = useAppSelector(
+    (s) => s.project.activeConnectedProjectId,
+  );
+  const workspaceFolderName = useAppSelector(
+    (s) => s.project.workspaceFolderName,
+  );
+  const trash = useAppSelector((s) => s.project.trash);
+  const trashedProjects = useAppSelector((s) => s.project.trashedProjects);
   const folderConnected = storageMode === 'folder';
   const workspaceLinked =
     Boolean(workspaceFolderName) || connectedProjects.length > 0;

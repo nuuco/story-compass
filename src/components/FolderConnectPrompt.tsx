@@ -44,8 +44,9 @@ export function FolderConnectPrompt() {
               <br />
               <span className="folder-connect-prompt__sample">
                 체험용 샘플은 저장소의{' '}
-                <code>sample-workspace</code> 폴더를 「기존 워크스페이스 열기」로
-                선택하세요.
+                <code>sample-workspace</code> 루트(
+                <code>workspace.json</code>이 있는 폴더)를 「기존 워크스페이스
+                열기」로 선택하세요.
               </span>
             </>
           )}

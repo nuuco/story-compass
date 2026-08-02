@@ -7,6 +7,12 @@
       "title": "밤기차의 손님",
       "createdAt": "2026-07-10T10:00:00.000Z",
       "updatedAt": "2026-08-01T14:30:00.000Z"
+    },
+    {
+      "id": "proj_sample_sketch",
+      "title": "짧은 스케치",
+      "createdAt": "2026-07-15T09:00:00.000Z",
+      "updatedAt": "2026-07-20T11:00:00.000Z"
     }
   ]
 }
