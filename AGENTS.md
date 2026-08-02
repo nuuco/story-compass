@@ -81,7 +81,8 @@
 - 워크스페이스 다중 프로젝트: 폴더 1연결 → projects/{id}/, 표시명은 manifest.title
 - 휴지통: 씬·참고·문서묶음·프로젝트 soft-delete, 삭제일/생성일 정렬·복원·영구삭제·비우기
 - ZIP 제거: ZipStorage·jszip 삭제, Chromium 워크스페이스 폴더 전용
-- 텍스트 추출: 씬/참고 복사, 문서 원고 복사·.txt 저장, 피드백은 app-toast
+- 씬/참고 텍스트 복사 + 앱 토스트
+- 전체 원고 보기 모달: 구간 칩(전체 토글)·인라인 제외(`제목 - 본문`)·제목 스위치·푸터 복사/txt(`YYYYMMDD_HHmm`)·이어진 미리보기
 - 토스트/휴지통 패널 배경 수정: 미정의 변수(--bg-elevated) 제거, 진한 알약형 토스트·shadow-md
 - 문서 현행화: 토스트·ZIP제거·추출·Phase2.6을 PRD/SRS/TRD/README/plan/worklog/troubleshooting/prompt-log에 반영
 - 워크스페이스 CTA 문구: 만들기/열기 → 새 워크스페이스·기존 워크스페이스 열기
@@ -102,3 +103,5 @@
 - 리팩터: selectors·noteConvert 분리, troubleshooting §8·§9
 - sample-workspace: 다중 프로젝트·README, 열 때 projects/ 편입·루트 레거시 정리(§10)
 - 워크스페이스 폴더 드래그앤드롭 연결 (FolderConnectPrompt + connectWorkspaceFromHandle)
+- 문서 현행화: 전체 원고 보기(SRS/TRD/PRD/README/AGENTS/worklog) 동기화
+- sample-workspace: 밤기차 3막 씬(암흑·진입·피날레·파이널) 추가

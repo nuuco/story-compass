@@ -144,7 +144,8 @@ interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, upd
 | `connectWorkspace` / `connectWorkspaceFromHandle` | 피커·드롭 공통 워크스페이스 연결 |
 | `autosave` | dirty 시 500ms 디바운스 `saveAll` |
 | prune | 활성·trash 각각 keepIds 기준 orphan JSON 삭제 |
-| `exportText` | 씬/참고/문서 평문 변환·클립보드·`.txt` 다운로드 |
+| `exportText` | 씬/참고 평문·클립보드·`.txt`. 원고는 `formatManuscriptPlain`(프로젝트·문서 헤더, 구간 라벨 없음, 제목 토글). `manuscriptDownloadFilename` → `{프로젝트}_{문서}_{YYYYMMDD}_{HHmm}` |
+| `ManuscriptPreviewModal` | 전체 원고 보기: 구간 칩·인라인 제외 슬롯(`제목 - 본문`)·제목 스위치·푸터 복사/저장. 미리보기는 보더리스·호버 하이라이트 |
 
 `storageMode`: `none` | `folder` (ZIP/`memory` 제거).
 
@@ -161,7 +162,7 @@ interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, upd
 app-shell (CSS grid: left | top/center)
 ├── ExplorerSidebar   # left full-height, 접기 가능
 ├── RouteNav          # top — 제목·프로그레스·막·WorkspaceActions
-└── SceneKanban       # center — 칸반 + SceneKeepModal
+└── SceneKanban       # center — 칸반 + SceneKeepModal + ManuscriptPreviewModal
 
 ReferenceDrawer       # shell 밖 fixed (그리드 간섭 방지)
 ```
@@ -173,6 +174,7 @@ ReferenceDrawer       # shell 밖 fixed (그리드 간섭 방지)
 - 프로그레스 좌측 마커 툴팁: RouteNav z-index > 사이드바, 끝 마커 정렬 보정
 - 앱 피드백 토스트(`.app-toast`): `--text-primary` 배경·`--bg-surface` 글자·`--radius-pill`·`--shadow-md`. 오류는 `--danger` 배경. Toast UI Editor와 클래스명 충돌 방지용 `app-` 접두사
 - 휴지통 패널(`.trash-panel`): `--bg-surface` + `--shadow-md` (미정의 `--bg-elevated` 사용 금지)
+- 전체 원고 모달(`.manuscript-modal`): max-width ~640px. 헤더(제목+프로젝트·문서)·구간 칩·본문·푸터(제목 포함 스위치·복사·`.txt`)
 
 ---
 
@@ -184,6 +186,7 @@ ReferenceDrawer       # shell 밖 fixed (그리드 간섭 방지)
 4. 사이/상단 호버로 `order` 삽입, 하단 「씬 추가」/「메모 추가」
 5. 비트 헤더 호버: guidance + prompts 툴팁(포털). 인포 호버 강조 → `BeatGuideModal`
 6. 한글 입력: `useImeDraft`로 composition 중 Redux commit 차단 (`TagChipsInput` 스페이스 확정)
+7. 전체 원고 보기: 칸반 「전체 원고 보기」→ `ManuscriptPreviewModal`. 구간 칩·인라인 제외·제목 스위치·푸터 복사/`.txt`
 
 ---
 
@@ -197,7 +200,7 @@ ReferenceDrawer       # shell 밖 fixed (그리드 간섭 방지)
 | 1 | 문서 트리·씬 CRUD·에디터·폴더 저장 | ✅ (에디터: TipTap→Toast UI) |
 | 2 | 15비트·칸반·참고·태그 필터 | ✅ |
 | 2.5 | 검색·막·킵 참고·삽입·빈 취소·사이드바·prune 등 UX | ✅ |
-| 2.6 | 워크스페이스·휴지통·ZIP 제거·텍스트 추출·앱 토스트 | ✅ |
+| 2.6 | 워크스페이스·휴지통·ZIP 제거·전체 원고 보기·앱 토스트 | ✅ |
 | 3 | Drive 등 | 후순위 |
 
 ---

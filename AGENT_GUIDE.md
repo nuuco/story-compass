@@ -42,7 +42,7 @@
 
 ## 완료 조건 (현행)
 
-- Phase 1~2.6: 문서·씬·참고 CRUD, 15비트 칸반, 검색·태그, 워크스페이스·휴지통, 텍스트 추출·앱 토스트, 복원·prune, typecheck/build 통과
+- Phase 1~2.6: 문서·씬·참고 CRUD, 15비트 칸반, 검색·태그, 워크스페이스·휴지통, 전체 원고 보기·앱 토스트, 복원·prune, typecheck/build 통과
 - 저장: Chromium 워크스페이스 폴더 전용 (ZIP 제거)
 - 상세: [docs/implementation-plan.md](docs/implementation-plan.md), [docs/SRS.md](docs/SRS.md)
 
