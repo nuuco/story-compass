@@ -1657,8 +1657,8 @@
   width: 64px;
   height: 64px;
   border-radius: 16px;
-  background: var(--surface-elevated);
-  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-divider);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1710,8 +1710,63 @@
   justify-content: center;
 }
 
+.folder-connect-prompt__actions .btn-secondary {
+  background: var(--bg-surface);
+}
+
+.folder-connect-prompt__actions .btn-secondary:hover {
+  background: var(--hover-bg);
+}
+
 .folder-connect-prompt__cta .material-symbols-rounded {
   font-size: 20px;
+}
+
+.folder-connect-prompt__sample {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 14px 0 0;
+}
+
+.folder-connect-prompt__sample-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+.folder-connect-prompt__sample-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.folder-connect-prompt__sample-link .material-symbols-rounded {
+  font-size: 16px;
+  color: inherit;
+}
+
+.folder-connect-prompt__sample-link:hover {
+  color: var(--accent-blue);
+}
+
+.folder-connect-prompt__sample-link:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .board {

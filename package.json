@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pack:sample": "zip -r public/sample-workspace.zip sample-workspace -x '*.DS_Store' -x '**/.DS_Store'"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

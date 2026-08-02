@@ -107,3 +107,5 @@
 - 점검: 빈 원고 헤더만 내보내기 가드·미사용 safeFilename 제거·SRS 검증 시나리오
 - README: 배포 URL·사용자 사용 안내 추가, 라이선스 절 제거
 - README: 화면 스크린샷(연결·칸반·참고·편집·원고) 첨부
+- 연결 안내: 체험용 샘플 받기 텍스트 링크·안내 (`public/sample-workspace.zip`, pack:sample), 기존 열기 CTA 표면 배경
+- README: 연결 화면 스크린샷(`01-connect-workspace`) 갱신

@@ -47,7 +47,7 @@ npm run build
 | 컴포넌트 | 역할 |
 |---|---|
 | `ExplorerSidebar` | 워크스페이스·프로젝트 트리·휴지통·폴더 연결 (CTA: 새 워크스페이스 / 기존 워크스페이스 열기) |
-| `FolderConnectPrompt` | 미연결 안내·CTA·**폴더 드래그앤드롭** 존 (`getAsFileSystemHandle`) |
+| `FolderConnectPrompt` | 미연결 안내·CTA(기존 열기는 표면 배경)·**폴더 드래그앤드롭**·하단 **체험용 샘플 받기** 텍스트 링크(`/sample-workspace.zip`) |
 | `TrashPanel` | 휴지통 목록(본문 미리보기)·정렬·복원·영구삭제·비우기 |
 | `Toast` | 복사·저장 등 짧은 피드백 — `.app-toast` 진한 알약형(불투명·`--shadow-md`) |
 | `RouteNav` | 제목·프로그레스·1·2·3막·마커 |
@@ -150,6 +150,7 @@ interface ReferenceNote { /* id, title, contentHtml, tags, order, createdAt, upd
 `storageMode`: `none` | `folder` (ZIP/`memory` 제거).
 
 체험용 샘플 데이터: 저장소 루트 [`sample-workspace/`](../sample-workspace/) (스키마 v2).  
+배포용 ZIP: [`public/sample-workspace.zip`](../public/sample-workspace.zip) — `npm run pack:sample`로 재생성.  
 미연결 시 피커 또는 연결 화면에 폴더 드롭으로 연다.
 
 참고↔씬 변환: `convertReferenceToScene` / `convertSceneToReference` / `copySceneToReference` / `copyReferenceToScene` ([`projectSlice.ts`](../src/store/projectSlice.ts)). 드래그 처리는 [`workspaceDrag.ts`](../src/utils/workspaceDrag.ts).

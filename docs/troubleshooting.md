@@ -297,8 +297,9 @@ rm -rf node_modules/.vite && npm run dev
 
 ### 체험용 샘플
 
-레포의 `sample-workspace/` 는 위 형식의 정상 예시이다.  
-**`sample-workspace` 루트**를 「기존 워크스페이스 열기」로 선택하거나, 연결 안내 화면에 **폴더를 드래그앤드롭**해도 된다.
+레포의 `sample-workspace/` 는 위 형식의 정상 예시이다.
+앱 연결 안내 하단 **체험용 샘플 받기** 텍스트 링크(`public/sample-workspace.zip`)로도 받을 수 있다. (`npm run pack:sample`로 ZIP 재생성)
+**sample-workspace** 폴더를 「기존 워크스페이스 열기」로 선택하거나, 연결 안내 화면에 **폴더를 드래그앤드롭**해도 된다.
 
 ### 관련 파일
 

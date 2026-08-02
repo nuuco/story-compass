@@ -24,7 +24,7 @@ Chrome 또는 Edge에서 여는 것을 권장합니다. (로컬 폴더 저장은
    또는 안내 화면에 **폴더를 끌어다 놓아** 연결할 수 있습니다.
 3. 브라우저가 폴더 접근을 물으면 **허용**합니다. (새로고침 후에도 이어서 쓰려면 권한이 필요합니다.)
 
-체험만 해 보려면 GitHub 저장소의 [`sample-workspace/`](sample-workspace/) 폴더를 「기존 워크스페이스 열기」또는 드롭으로 연결하세요. (`workspace.json`이 있는 폴더 루트를 고릅니다.)
+체험만 해 보려면 연결 안내의 **체험용 샘플 받기**로 ZIP을 내려받아 푼 뒤, sample-workspace 폴더를 「기존 워크스페이스 열기」또는 드롭으로 연결하세요. 레포의 [`sample-workspace/`](sample-workspace/)를 그대로 연결해도 됩니다.
 
 ![워크스페이스 폴더 연결](docs/screenshots/01-connect-workspace.png)
 
@@ -110,6 +110,7 @@ npm run build
 ### 샘플 데이터
 
 [`sample-workspace/`](sample-workspace/) — 「밤기차의 손님」(본편)·「짧은 스케치」(전환 체험).  
+배포용 ZIP: [`public/sample-workspace.zip`](public/sample-workspace.zip) (`npm run pack:sample`).  
 자세한 트리: [`sample-workspace/README.md`](sample-workspace/README.md).
 
 ### 폴더 구조 (워크스페이스)

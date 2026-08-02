@@ -214,6 +214,24 @@ export function FolderConnectPrompt() {
               또는 폴더를 <strong>이 영역으로 끌어다 놓으세요</strong>
             </p>
           ) : null}
+
+          {canDrop ? (
+            <div className="folder-connect-prompt__sample">
+              <a
+                className="folder-connect-prompt__sample-link"
+                href="/sample-workspace.zip"
+                download="sample-workspace.zip"
+              >
+                <span className="material-symbols-rounded" aria-hidden>
+                  download
+                </span>
+                체험용 샘플 받기
+              </a>
+              <p className="folder-connect-prompt__sample-hint">
+                압축을 푼 sample-workspace 폴더를 열어 주세요
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
     </main>

@@ -339,3 +339,9 @@
 - 변경: `sceneHasManuscriptContent` 가드, 미사용 `safeFilename` 제거, SRS §6 시나리오·TRD/AGENTS
 - 명령: typecheck·build 통과
 - 판정: 채택
+
+### 2026-08-02 — 샘플 워크스페이스 다운로드 CTA
+
+- 목적: 미연결 화면에서 체험용 샘플을 바로 받을 수 있게
+- 변경: `public/sample-workspace.zip`, FolderConnectPrompt 「체험용 샘플 받기」텍스트 링크·2줄 안내, 기존 열기 CTA 표면 배경, `pack:sample`, SRS/TRD/README/troubleshooting, 연결 화면 스크린샷 갱신
+- 판정: 채택
