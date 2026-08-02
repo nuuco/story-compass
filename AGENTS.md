@@ -109,3 +109,4 @@
 - README: 화면 스크린샷(연결·칸반·참고·편집·원고) 첨부
 - 연결 안내: 체험용 샘플 받기 텍스트 링크·안내 (`public/sample-workspace.zip`, pack:sample), 기존 열기 CTA 표면 배경
 - README: 연결 화면 스크린샷(`01-connect-workspace`) 갱신
+- 칸반 끝 스크롤에서 왼쪽 화살표 무반응 수정 (`scrollBoardSnap` 왼쪽 앵커)

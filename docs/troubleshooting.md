@@ -307,3 +307,25 @@ rm -rf node_modules/.vite && npm run dev
 - `src/storage/projectConnection.ts` (`connectWorkspaceFromHandle`)
 - `src/components/FolderConnectPrompt.tsx`
 - `sample-workspace/README.md`
+
+---
+
+## 11. 칸반 끝에서 왼쪽 화살표가 안 움직임
+
+### 증상
+
+가로 스크롤을 **맨 끝**(마지막 비트 쪽)까지 보낸 뒤 왼쪽 화살표를 눌러도 보드가 이동하지 않는다.
+
+### 원인
+
+`getFocusedBeatFromBoardScroll`은 끝 스크롤 시 프로그레스 동기화용으로 **마지막 비트**를 반환한다.  
+`scrollBoardSnap`이 이를 기준으로 N열을 왼쪽으로 점프하면, 목표가 **이미 뷰포트 왼쪽**에 있는 열이라 `scrollLeft`가 거의 변하지 않았다.
+
+### 해결
+
+화살표 스냅은 끝→마지막 비트 강제 없이 **왼쪽 앵커 열**을 기준으로 점프한다.  
+목표 열로 스크롤해도 위치가 같으면 방향으로 한 칸씩 더 이동한다.
+
+### 관련 파일
+
+- `src/utils/scrollBeat.ts` (`scrollBoardSnap`, `getLeftAnchoredBeat`)

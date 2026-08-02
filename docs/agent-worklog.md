@@ -345,3 +345,9 @@
 - 목적: 미연결 화면에서 체험용 샘플을 바로 받을 수 있게
 - 변경: `public/sample-workspace.zip`, FolderConnectPrompt 「체험용 샘플 받기」텍스트 링크·2줄 안내, 기존 열기 CTA 표면 배경, `pack:sample`, SRS/TRD/README/troubleshooting, 연결 화면 스크린샷 갱신
 - 판정: 채택
+
+### 2026-08-02 — 칸반 끝에서 왼쪽 화살표 무반응
+
+- 목적: 마지막 비트(끝 스크롤)에서 왼쪽 화살표가 이동하지 않던 버그
+- 변경: `scrollBoardSnap`이 왼쪽 앵커 기준 점프·실이동 보장, troubleshooting §11
+- 판정: 채택
