@@ -144,20 +144,25 @@ export async function requestWorkspaceAccess(
   }
 }
 
-/** 워크스페이스 폴더 연결 (새 프로젝트 생성 또는 기존 열기) */
-export async function connectWorkspace(
+/** 이미 얻은 디렉터리 핸들로 워크스페이스 연결 (드롭·피커 공통) */
+export async function connectWorkspaceFromHandle(
   dispatch: AppDispatch,
+  root: FileSystemDirectoryHandle,
   mode: 'new' | 'open' = 'open',
 ): Promise<boolean> {
   try {
-    const workspace = await WorkspaceStorage.pick();
-    if (!workspace) {
-      window.alert(
-        '이 브라우저는 폴더 선택을 지원하지 않습니다. Chrome·Edge를 사용하세요.',
-      );
+    if (root.kind !== 'directory') {
+      window.alert('워크스페이스 폴더를 선택해 주세요.');
       return false;
     }
 
+    const granted = await ensureDirectoryPermission(root, 'readwrite');
+    if (!granted) {
+      window.alert('폴더 읽기·쓰기 권한이 필요합니다.');
+      return false;
+    }
+
+    const workspace = WorkspaceStorage.fromHandle(root);
     const hasContent = await workspace.hasAnyContent();
     let wsManifest = await workspace.ensureWorkspaceLayout();
 
@@ -178,7 +183,6 @@ export async function connectWorkspace(
       );
     }
 
-    // 레거시 마이그레이션 등으로 프로젝트가 생긴 경우
     wsManifest = await workspace.loadWorkspaceManifest();
     if (mode === 'new' && wsManifest.projects.length > 0) {
       const openExisting = window.confirm(
@@ -191,6 +195,8 @@ export async function connectWorkspace(
       wsManifest.activeProjectId ?? wsManifest.projects[0]?.id ?? null;
     if (!targetId) {
       const { snapshot } = await workspace.createProject();
+      setActiveWorkspace(workspace);
+      await saveWorkspaceHandle(workspace.directoryHandle);
       return activateProjectInWorkspace(
         dispatch,
         workspace,
@@ -201,6 +207,31 @@ export async function connectWorkspace(
     setActiveWorkspace(workspace);
     await saveWorkspaceHandle(workspace.directoryHandle);
     return activateProjectInWorkspace(dispatch, workspace, targetId);
+  } catch (e) {
+    console.error(e);
+    window.alert('폴더를 열 수 없습니다.');
+    return false;
+  }
+}
+
+/** 워크스페이스 폴더 연결 (새 프로젝트 생성 또는 기존 열기) */
+export async function connectWorkspace(
+  dispatch: AppDispatch,
+  mode: 'new' | 'open' = 'open',
+): Promise<boolean> {
+  try {
+    const workspace = await WorkspaceStorage.pick();
+    if (!workspace) {
+      window.alert(
+        '이 브라우저는 폴더 선택을 지원하지 않습니다. Chrome·Edge를 사용하세요.',
+      );
+      return false;
+    }
+    return connectWorkspaceFromHandle(
+      dispatch,
+      workspace.directoryHandle,
+      mode,
+    );
   } catch (e) {
     console.error(e);
     window.alert('폴더를 열 수 없습니다.');
